@@ -1,0 +1,12 @@
+{
+    "id": "{1D5A31DC-9F88-804A-FE27-965ECFD06726}",
+    "name": "Fuel Monitor",
+    "author": "Heiko Wilknitz",
+    "url": "https://wilkware.de/",
+    "compatibility": {
+        "version": "6.0"
+    },
+    "version": "1.0",
+    "build": 20220424,
+    "date": 1650794400
+}

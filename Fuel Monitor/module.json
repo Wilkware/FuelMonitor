@@ -1,0 +1,12 @@
+{
+    "id": "{E84AC6F5-44C0-A171-D308-0FCC08FB6A4F}",
+    "name": "Fuel Monitor",
+    "type": 3,
+    "vendor": "",
+    "aliases": [],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "SVM",
+    "url": "https://wilkware.de/ip-symcon-module/fuel-monitor/"
+}
