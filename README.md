@@ -21,7 +21,7 @@ Das Modul Lichtautomat (Light Automat) überwacht und schaltet das Licht automat
 
 ### 1. Funktionsumfang
 
-Der Spritmonitor berechnet den Spritverbrauch Ihres Fahrzeugs und hilft bei der Verwaltung Ihrer Autokosten. Dies beinhaltet eine Verbrauchs- und Kostenanalyse sowie einige weitere Funktionen.
+Der Spritmonitor berechnet den Spritverbrauch Ihres Fahrzeugs und hilft bei der Verwaltung Ihrer Kosten.
 
 ### 2. Voraussetzungen
 

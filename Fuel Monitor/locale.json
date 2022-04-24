@@ -1,8 +1,13 @@
 {
     "translations": {
         "de": {
-            "Translation 1": "Übersetzung 1",
-            "Translation 2": "Übersetzung 2"
+            "\nFuel Monitor\n ": "\nSpritmonitor\n ",
+            "This module calculates your vehicle's fuel consumption and helps manage your costs.": "Dieses Modul berechnet den Spritverbrauch Ihres Fahrzeugs und hilft bei der Verwaltung Ihrer Kosten.",
+            "Creating instance.": "Die Instanz wird erstellt.",
+            "Instance active.": "Instanz ist aktiv.",
+            "Instance inactive.": "Instanz ist inaktiv.",
+            "Source code, donation and licence ...": "Quellcode, Spende und Lizenz ...",
+            "The software is free of charge for non-commercial use, I would appreciate a donation if you like the module.": "Die Software ist für die nicht kommzerielle Nutzung kostenlos, über eine Spende bei Gefallen des Moduls würde ich mich sehr freuen."
         }
     }
 }
