@@ -3,7 +3,11 @@
     "name": "Fuel Monitor",
     "type": 3,
     "vendor": "",
-    "aliases": [],
+    "aliases": [
+        "Spritmonitor",
+        "Benzinkostenrechner",
+        "Benzinverbrauchsrechner"
+    ],
     "parentRequirements": [],
     "childRequirements": [],
     "implemented": [],
