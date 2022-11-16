@@ -1,8 +1,8 @@
-# Lichtautomat (Light Automat)
+# Spritmonitor (Fuel Monitor)
 
 [![Version](https://img.shields.io/badge/Symcon-PHP--Modul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
 [![Product](https://img.shields.io/badge/Symcon%20Version-6.0-blue.svg)](https://www.symcon.de/produkt/)
-[![Version](https://img.shields.io/badge/Modul%20Version-6.0.20220401-orange.svg)](https://github.com/Wilkware/IPSymconFuelMonitor)
+[![Version](https://img.shields.io/badge/Modul%20Version-1.0.20220424-orange.svg)](https://github.com/Wilkware/IPSymconFuelMonitor)
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Actions](https://github.com/Wilkware/IPSymconFuelMonitor/workflows/Check%20Style/badge.svg)](https://github.com/Wilkware/IPSymconFuelMonitor/actions)
 
