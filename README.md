@@ -1,7 +1,7 @@
 # Spritmonitor (Fuel Monitor)
 
 [![Version](https://img.shields.io/badge/Symcon-PHP--Modul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
-[![Product](https://img.shields.io/badge/Symcon%20Version-6.0-blue.svg)](https://www.symcon.de/produkt/)
+[![Product](https://img.shields.io/badge/Symcon%20Version-6.4-blue.svg)](https://www.symcon.de/produkt/)
 [![Version](https://img.shields.io/badge/Modul%20Version-1.0.20220424-orange.svg)](https://github.com/Wilkware/IPSymconFuelMonitor)
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Actions](https://github.com/Wilkware/IPSymconFuelMonitor/workflows/Check%20Style/badge.svg)](https://github.com/Wilkware/IPSymconFuelMonitor/actions)
@@ -15,7 +15,7 @@ Der Spritmonitor berechnet den Spritverbrauch Ihres Fahrzeugs und hilft bei der 
 3. [Installation](#user-content-3-installation)
 4. [Einrichten der Instanzen in IP-Symcon](#user-content-4-einrichten-der-instanzen-in-ip-symcon)
 5. [Statusvariablen und Profile](#user-content-5-statusvariablen-und-profile)
-6. [WebFront](#user-content-6-webfront)
+6. [Visualisierung](#user-content-6-visualisierung)
 7. [PHP-Befehlsreferenz](#user-content-7-php-befehlsreferenz)
 8. [Versionshistorie](#user-content-8-versionshistorie)
 
@@ -25,7 +25,7 @@ Der Spritmonitor berechnet den Spritverbrauch Ihres Fahrzeugs und hilft bei der 
 
 ### 2. Voraussetzungen
 
-* IP-Symcon ab Version 6.0
+* IP-Symcon ab Version 6.4
 
 ### 3. Installation
 
@@ -67,9 +67,9 @@ Name                 | Typ       | Beschreibung
 -------------------- | --------- | ----------------
 SVM.Profil           | Integer   | Text
 
-### 6. WebFront
+### 6. Visualisierung
 
-Alle Statusvariablen können im Webfront verlinkt werden.  
+Alle Statusvariablen können in die Visualisierung verlinkt werden.  
 
 ### 7. PHP-Befehlsreferenz
 

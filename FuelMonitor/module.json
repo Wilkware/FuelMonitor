@@ -4,9 +4,8 @@
     "type": 3,
     "vendor": "",
     "aliases": [
-        "Spritmonitor",
-        "Benzinkostenrechner",
-        "Benzinverbrauchsrechner"
+        "Gasoline cost calculator",
+        "Gasoline consumption calculator"
     ],
     "parentRequirements": [],
     "childRequirements": [],
