@@ -31,7 +31,7 @@ Der Spritmonitor berechnet den Spritverbrauch Ihres Fahrzeugs und hilft bei der 
 
 * Über den Modul Store das Modul _Sprintmonitor_ installieren.
 * Alternativ Über das Modul-Control folgende URL hinzufügen.  
-`https://github.com/Wilkware/IPSymconFuelMonitor` oder `git://github.com/Wilkware/IPSymconFuelMonitor.git`
+`https://github.com/Wilkware/FuelMonitor` oder `git://github.com/Wilkware/FuelMonitor.git`
 
 ### 4. Einrichten der Instanzen in IP-Symcon
 
