@@ -2,35 +2,74 @@
 
 declare(strict_types=1);
 
-// Generell funktions
+/** Generell funktions */
 require_once __DIR__ . '/../libs/_traits.php';
 
-// CLASS Fuel Monitor
-class FuelMonitor extends IPSModule
+/**
+ * Class FuelMonitor
+ */
+class FuelMonitor extends IPSModuleStrict
 {
+    // -------------------------------------------------------------------------
+    // Traits
+    // -------------------------------------------------------------------------
+
     use ProfileHelper;
     use DebugHelper;
     use VariableHelper;
 
-    // Archive GUID
+    // -------------------------------------------------------------------------
+    // Constants
+    // -------------------------------------------------------------------------
+
+    /** @var string Archive GUID  */
     private const ARCHIVE_GUID = '{43192F0B-135B-4CE7-A0A7-1475603F3060}';
+
+    /** @var int Archive Default Aggregation  */
     private const ARCHIVE_DEFAULT = 0;
+
+    /** @var int Archive Counter Aggregation  */
     private const ARCHIVE_COUNTER = 1;
 
-    // Min/Max constant
-    private const MIN_MILEAGE = 0;        // 0 km
-    private const MAX_MILEAGE = 1000000;  // 1.000.0000 km
-    private const MIN_CAPACITY = 0;        // 0 Liter
-    private const MAX_CAPACITY = 1000;     // 100 Liter
-    private const MIN_PRICE = 0;        // 0,000 Euro
-    private const MAX_PRICE = 10;       // 10,000 Euro
-    private const MIN_INVOICE = 0;        // 0,00 Euro
-    private const MAX_INVOICE = 10000;    // 10.000,00 Euro
+    // -------------------------------------------------------------------------
+    // Constants (Min/Max)
+    // -------------------------------------------------------------------------
+
+    /** @var int Min milage (0 km) */
+    private const MIN_MILEAGE = 0;
+
+    /** @var int Max milage (1.000.0000 km) */
+    private const MAX_MILEAGE = 1000000;
+
+    /** @var int Min capacity (0 Liter) */
+    private const MIN_CAPACITY = 0;
+
+    /** @var int Max capacity (1000 Liter) */
+    private const MAX_CAPACITY = 1000;
+
+    /** @var int Min price (0,000 Euro) */
+    private const MIN_PRICE = 0;
+
+    /** @var int Max price (10,000 Euro) */
+    private const MAX_PRICE = 10;
+
+    /** @var int Min invoice (0,000 Euro) */
+    private const MIN_INVOICE = 0;
+
+    /** @var int Max invoice (10,000 Euro) */
+    private const MAX_INVOICE = 10000;
+
+    // -------------------------------------------------------------------------
+    // Methods
+    // -------------------------------------------------------------------------
 
     /**
-     * Create.
+     * In contrast to Construct, this function is called only once when creating the instance and starting IP-Symcon.
+     * Therefore, status variables and module properties which the module requires permanently should be created here.
+     *
+     * @return void
      */
-    public function Create()
+    public function Create(): void
     {
         //Never delete this line!
         parent::Create();
@@ -102,6 +141,7 @@ class FuelMonitor extends IPSModule
             [0, '►', '', 0xFF8000],
         ];
         $this->RegisterProfileInteger('SVM.SaveInput', 'Script', '', '', 0, 0, 0, $save);
+
         // Profile Kilometers, Liters & Price
         $this->RegisterProfileInteger('SVM.Kilometers', 'Distance', '', ' km', 0, 0, 2);
         $this->RegisterProfileFloat('SVM.Liters', 'Tap', '', ' l', 0, 0, 0, 2);
@@ -110,6 +150,7 @@ class FuelMonitor extends IPSModule
         $this->RegisterProfileFloat('SVM.Costs', 'Graph', '', ' €/100km', 0, 0, 0, 2);
 
         // Register property variables
+
         // Calculation ...
         $this->RegisterPropertyBoolean('CalcQuantity', false);
         $this->RegisterPropertyBoolean('QuantityByPrice', false);
@@ -129,16 +170,26 @@ class FuelMonitor extends IPSModule
         $ilm = IPS_GetInstanceListByModuleID(self::ARCHIVE_GUID);
         $aid = $ilm[0];
         // Register status variables + statistics
-        $vid = $this->RegisterVariableInteger('kilometers', $this->Translate('Kilometers'), 'SVM.Kilometers', 0);
-        $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_COUNTER, true);
-        $vid = $this->RegisterVariableFloat('liters', $this->Translate('Liters'), 'SVM.Liters', 1);
-        $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_COUNTER, true);
-        $vid = $this->RegisterVariableFloat('price', $this->Translate('Price'), 'SVM.Price', 2);
-        $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_DEFAULT, false);
-        $vid = $this->RegisterVariableFloat('average', $this->Translate('Average fuel consumption'), 'SVM.Average', 3);
-        $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_DEFAULT, false);
-        $vid = $this->RegisterVariableFloat('costs', $this->Translate('Costs'), 'SVM.Costs', 4);
-        $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_DEFAULT, false);
+        if($this->RegisterVariableInteger('kilometers', $this->Translate('Kilometers'), 'SVM.Kilometers', 0)) {
+            $vid = @$this->GetIDForIdent('kilometers');
+            $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_COUNTER, true);
+        }
+        if($this->RegisterVariableFloat('liters', $this->Translate('Liters'), 'SVM.Liters', 1)) {
+            $vid = @$this->GetIDForIdent('liters');
+            $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_COUNTER, true);
+        }
+        if($this->RegisterVariableFloat('price', $this->Translate('Price'), 'SVM.Price', 2)) {
+            $vid = @$this->GetIDForIdent('price');
+            $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_DEFAULT, false);
+        }
+        if($this->RegisterVariableFloat('average', $this->Translate('Average fuel consumption'), 'SVM.Average', 3)) {
+            $vid = @$this->GetIDForIdent('average');
+            $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_DEFAULT, false);
+        }
+        if($this->RegisterVariableFloat('costs', $this->Translate('Costs'), 'SVM.Costs', 4)) {
+            $vid = @$this->GetIDForIdent('costs');
+            $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_DEFAULT, false);
+        }
 
         // Register status variables + actions
         $this->RegisterVariableInteger('time', $this->Translate('Time'), 'SVM.Time', 10);
@@ -170,26 +221,40 @@ class FuelMonitor extends IPSModule
     }
 
     /**
-     * Destroy.
+     * This function is called when deleting the instance during operation and when updating via "Module Control".
+     * The function is not called when exiting IP-Symcon.
+     *
+     * @return void
      */
-    public function Destroy()
+    public function Destroy(): void
+
     {
         parent::Destroy();
     }
 
     /**
-     * Configuration Form.
+     * The content can be overwritten in order to transfer a self-created configuration page.
+     * This way, content can be generated dynamically.
+     * In this case, the "form.json" on the file system is completely ignored.
      *
-     * @return JSON configuration string.
+     * @return string Content of the configuration page.
      */
-    public function GetConfigurationForm()
+    public function GetConfigurationForm(): string
     {
+        // Get Form
+        $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+
+        // Extract Version
+        $ins = IPS_GetInstance($this->InstanceID);
+        $mod = IPS_GetModule($ins['ModuleInfo']['ModuleID']);
+        $lib = IPS_GetLibrary($mod['LibraryID']);
+        $form['actions'][1]['items'][2]['caption'] = sprintf('v%s.%d', $lib['Version'], $lib['Build']);
+
         // Read Setup
         $quantity = $this->ReadPropertyBoolean('CalcQuantity');
         $price = $this->ReadPropertyBoolean('CalcPrice');
         $invoice = $this->ReadPropertyBoolean('CalcInvoice');
-        // Get Form
-        $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+
         // Enable or disable
         $form['elements'][2]['items'][0]['items'][1]['enabled'] = $quantity;
         $form['elements'][2]['items'][0]['items'][2]['enabled'] = $quantity;
@@ -202,25 +267,29 @@ class FuelMonitor extends IPSModule
     }
 
     /**
-     * Apply Configuration Changes.
+     * Is executed when "Apply" is pressed on the configuration page and immediately after the instance has been created.
+     *
+     * @return void
      */
-    public function ApplyChanges()
+    public function ApplyChanges(): void
     {
         //Never delete this line!
         parent::ApplyChanges();
-        //      $this->SendDebug(__FUNCTION__, 'Debug = ');
+        //      $this->LogDebug(__FUNCTION__, 'Debug = ');
     }
 
     /**
-     * RequestAction.
+     * Is called when, for example, a button is clicked in the visualization.
      *
-     *  @param string $ident Ident.
-     *  @param string $value Value.
+     * @param string $ident Ident of the variable
+     * @param mixed $value The value to be set
+     *
+     * @return void
      */
-    public function RequestAction($ident, $value)
+    public function RequestAction(string $ident, mixed $value): void
     {
         // Debug output
-        $this->SendDebug(__FUNCTION__, $ident . ' => ' . $value);
+        $this->LogDebug(__FUNCTION__, $ident . ' => ' . $value);
         switch ($ident) {
             case 'time':
                 $this->SetValueInteger($ident, $value);
@@ -268,18 +337,19 @@ class FuelMonitor extends IPSModule
             default:
                 eval('$this->' . $ident . '(\'' . $value . '\');');
         }
-        return true;
     }
 
     /**
      * Modify quantity calculation.
      *
      * @param string $value Selection values.
+     * 
+     * @return void
      */
-    protected function OnChangeQuality($value)
+    protected function OnChangeQuality($value): void
     {
         $data = unserialize($value);
-        //$this->SendDebug(__FUNCTION__, $data);
+        //$this->LogDebug(__FUNCTION__, $data);
         // Enable or disable?
         $enabled = $data['c4q'];
         $this->UpdateFormField('QuantityByPrice', 'enabled', $enabled);
@@ -299,11 +369,13 @@ class FuelMonitor extends IPSModule
      * Modify price per litre calculation.
      *
      * @param string $value Selection values.
+     * 
+     * @return void
      */
-    protected function OnChangePrice($value)
+    protected function OnChangePrice($value): void
     {
         $data = unserialize($value);
-        //$this->SendDebug(__FUNCTION__, $data);
+        //$this->LogDebug(__FUNCTION__, $data);
         // Enable or disable?
         $enabled = $data['c4p'];
         $this->UpdateFormField('PriceByQuantity', 'enabled', $enabled);
@@ -323,11 +395,13 @@ class FuelMonitor extends IPSModule
      * Modify invoice calculation.
      *
      * @param string $value Selection values.
+     * 
+     * @return void
      */
-    protected function OnChangeInvoice($value)
+    protected function OnChangeInvoice($value): void
     {
         $data = unserialize($value);
-        //$this->SendDebug(__FUNCTION__, $data);
+        //$this->LogDebug(__FUNCTION__, $data);
         // Enable or disable?
         $enabled = $data['c4i'];
         $this->UpdateFormField('InvoiceByQuantity', 'enabled', $enabled);
@@ -350,8 +424,10 @@ class FuelMonitor extends IPSModule
      * @param mixed $value Value
      * @param int $min Minimum value.
      * @param int $max Maximum value.
+     * 
+     * @return int calculated profile value.
      */
-    private function OnCalcValue($ident, $value, $min, $max)
+    private function OnCalcValue($ident, $value, $min, $max): int
     {
         $current = $this->GetValue($ident);
         // special case (direct click)
@@ -380,15 +456,17 @@ class FuelMonitor extends IPSModule
      * Modify values depends on setup configuration
      *
      * @param float $value New quantity value.
+     * 
+     * @return void
      */
-    private function ModifyByQuantity($value)
+    private function ModifyByQuantity($value): void
     {
         if ($this->ReadPropertyBoolean('CalcPrice')) {
             if ($this->ReadPropertyBoolean('PriceByQuantity')) {
                 $invoice = $this->GetValue('invoice');
                 $price = round($invoice / $value, 3);
                 $this->SetValueFloat('price_per_litre', $price);
-                $this->SendDebug(__FUNCTION__, 'price_per_litre => ' . $price);
+                $this->LogDebug(__FUNCTION__, 'price_per_litre => ' . $price);
             }
         }
 
@@ -397,7 +475,7 @@ class FuelMonitor extends IPSModule
                 $price = $this->GetValue('price_per_litre');
                 $invoice = round($price * $value, 2);
                 $this->SetValueFloat('invoice', $invoice);
-                $this->SendDebug(__FUNCTION__, 'invoice => ' . $invoice);
+                $this->LogDebug(__FUNCTION__, 'invoice => ' . $invoice);
             }
         }
     }
@@ -406,15 +484,17 @@ class FuelMonitor extends IPSModule
      * Modify values depends on setup configuration
      *
      * @param float $value New proce per litre value.
+     * 
+     * @return void
      */
-    private function ModifyByPrice($value)
+    private function ModifyByPrice($value): void
     {
         if ($this->ReadPropertyBoolean('CalcQuantity')) {
             if ($this->ReadPropertyBoolean('QuantityByPrice')) {
                 $invoice = $this->GetValue('invoice');
                 $quantity = round($invoice / $value, 2);
                 $this->SetValueFloat('quantity', $quantity);
-                $this->SendDebug(__FUNCTION__, 'quantity => ' . $quantity);
+                $this->LogDebug(__FUNCTION__, 'quantity => ' . $quantity);
             }
         }
         if ($this->ReadPropertyBoolean('CalcInvoice')) {
@@ -422,7 +502,7 @@ class FuelMonitor extends IPSModule
                 $quantity = $this->GetValue('quantity');
                 $invoice = round($quantity * $value, 2);
                 $this->SetValueFloat('invoice', $invoice);
-                $this->SendDebug(__FUNCTION__, 'invoice => ' . $invoice);
+                $this->LogDebug(__FUNCTION__, 'invoice => ' . $invoice);
             }
         }
     }
@@ -431,15 +511,17 @@ class FuelMonitor extends IPSModule
      * Modify values depends on setup configuration
      *
      * @param float $value New invoice value.
+     * 
+     * @return void
      */
-    private function ModifyByInvoice($value)
+    private function ModifyByInvoice($value): void
     {
         if ($this->ReadPropertyBoolean('CalcQuantity')) {
             if ($this->ReadPropertyBoolean('QuantityByInvoice')) {
                 $price = $this->GetValue('price_per_litre');
                 $quantity = round($value / $price, 2);
                 $this->SetValueFloat('quantity', $quantity);
-                $this->SendDebug(__FUNCTION__, 'quantity => ' . $quantity);
+                $this->LogDebug(__FUNCTION__, 'quantity => ' . $quantity);
             }
         }
         if ($this->ReadPropertyBoolean('CalcPrice')) {
@@ -447,7 +529,7 @@ class FuelMonitor extends IPSModule
                 $quantity = $this->GetValue('quantity');
                 $price = round($value / $quantity, 3);
                 $this->SetValueFloat('price_per_litre', $price);
-                $this->SendDebug(__FUNCTION__, 'price_per_litre => ' . $price);
+                $this->LogDebug(__FUNCTION__, 'price_per_litre => ' . $price);
             }
         }
     }
@@ -456,8 +538,10 @@ class FuelMonitor extends IPSModule
      * User has activate save action.
      *
      * @param int $value save value.
+     * 
+     * @return void
      */
-    private function OnSaveInput($value)
+    private function OnSaveInput($value): void
     {
         // get data
         $ts = $this->GetValue('date');
@@ -466,7 +550,7 @@ class FuelMonitor extends IPSModule
         $pl = $this->GetValue('price_per_litre');
         $iv = $this->GetValue('invoice');
         $rt = $this->GetValue('refuelling');
-        $this->SendDebug(__FUNCTION__, 'Date: ' . $ts . ',Milage: ' . $mi . ',Quantity: ' . $tq . ',Price: ' . $pl . ',Invoice: ' . $iv . ',Typ: ' . $rt);
+        $this->LogDebug(__FUNCTION__, 'Date: ' . $ts . ',Milage: ' . $mi . ',Quantity: ' . $tq . ',Price: ' . $pl . ',Invoice: ' . $iv . ',Typ: ' . $rt);
 
         // get IDs
         $ks = $this->GetIDForIdent('kilometers');
@@ -480,30 +564,29 @@ class FuelMonitor extends IPSModule
         $aid = @$ilm[0];
         if (!isset($aid)) {
             $this->LogMessage('Archive Control not found!', KL_ERROR);
-            return false;
+            return;
         }
 
         // check logging status
-        $status = true;
-        $status = $status && $this->ArchiveCheck($aid, $ks);
+        $status = $this->ArchiveCheck($aid, $ks);
         $status = $status && $this->ArchiveCheck($aid, $ls);
         $status = $status && $this->ArchiveCheck($aid, $ps);
         $status = $status && $this->ArchiveCheck($aid, $as);
         $status = $status && $this->ArchiveCheck($aid, $cs);
         if (!$status) {
             $this->LogMessage('Archive Logging Status not valid!', KL_WARNING);
-            return false;
+            return;
         }
 
         // first save?
         $lastValue = AC_GetLoggedValues($aid, $ks, 0, 0, 1);
         $first = empty($lastValue);
-        $this->SendDebug(__FUNCTION__, 'First Save: ' . boolval($first));
+        $this->LogDebug(__FUNCTION__, 'First Save: ' . boolval($first));
 
         // then also selected?
         if ($first && $rt != 0) {
             echo $this->Translate('Initially please start with a first filling!');
-            return false;
+            return;
         }
 
         // advanced check
@@ -512,7 +595,7 @@ class FuelMonitor extends IPSModule
 
         if (!$first && $initial && ($rt == 0)) {
             echo $this->Translate('First filling only allowed when saving for the first time!');
-            return false;
+            return;
         }
 
         $km = $this->GetValue('kilometers');
@@ -521,8 +604,8 @@ class FuelMonitor extends IPSModule
                 if ($decrease) {
                     echo $this->Translate('Mileage is less than or unchanged from the last registration!');
                 }
-                $this->SendDebug(__FUNCTION__, 'Mileage is less than or unchanged from the last registration!');
-                return false;
+                $this->LogDebug(__FUNCTION__, 'Mileage is less than or unchanged from the last registration!');
+                return;
             }
         }
 
@@ -548,7 +631,7 @@ class FuelMonitor extends IPSModule
             AC_DeleteVariableData($aid, $cs, 0, 0);
             $this->ArchiveVariable($aid, $cs, true, self::ARCHIVE_DEFAULT, false);
             $this->ArchiveCheck($aid, $cs);
-            $this->SendDebug(__FUNCTION__, 'ReInit Archive - delete all old values!');
+            $this->LogDebug(__FUNCTION__, 'ReInit Archive - delete all old values!');
             // Reset History Attribute
             $this->WriteAttributeString('History', '[]');
         }
@@ -563,38 +646,37 @@ class FuelMonitor extends IPSModule
             AC_AddLoggedValues($aid, $ps, [['TimeStamp' => $ts, 'Value' => $pl]]); //$this->SetValueFloat(, $pl);
             AC_AddLoggedValues($aid, $as, [['TimeStamp' => $ts, 'Value' => 0]]); //$this->SetValueFloat(, 0);
             AC_AddLoggedValues($aid, $cs, [['TimeStamp' => $ts, 'Value' => 0]]); //$this->SetValueFloat(, 0);
-            $this->SendDebug(__FUNCTION__, 'Log Values for initial filling!');
+            $this->LogDebug(__FUNCTION__, 'Log Values for initial filling!');
             $reaggregate = true;
         } elseif ($rt == 1) {
         } else {
             $lastks = AC_GetLoggedValues($aid, $ks, 0, 0, 1);
-            $this->SendDebug(__FUNCTION__, $lastks);
+            $this->LogDebug(__FUNCTION__, $lastks);
             $lastls = AC_GetLoggedValues($aid, $ls, 0, 0, 1);
-            $this->SendDebug(__FUNCTION__, $lastls);
+            $this->LogDebug(__FUNCTION__, $lastls);
             $distance = $mi - $lastks[0]['Value'];
-            $this->SendDebug(__FUNCTION__, 'Distance: ' . $distance);
+            $this->LogDebug(__FUNCTION__, 'Distance: ' . $distance);
             $consumption = ($tq * 100) / $distance;
-            $this->SendDebug(__FUNCTION__, 'Consumption: ' . $consumption);
+            $this->LogDebug(__FUNCTION__, 'Consumption: ' . $consumption);
             $cost = $pl * $consumption;
-            $this->SendDebug(__FUNCTION__, 'Costs: ' . $cost);
+            $this->LogDebug(__FUNCTION__, 'Costs: ' . $cost);
             AC_AddLoggedValues($aid, $ks, [['TimeStamp' => $ts, 'Value' => $mi]]); //$this->SetValueInteger(, $mi);
             AC_AddLoggedValues($aid, $ls, [['TimeStamp' => $ts, 'Value' => $tq]]); //$this->SetValueFloat(, $tq);
             AC_AddLoggedValues($aid, $ps, [['TimeStamp' => $ts, 'Value' => $pl]]); //$this->SetValueFloat(, $pl);
             AC_AddLoggedValues($aid, $as, [['TimeStamp' => $ts, 'Value' => $consumption]]); //$this->SetValueFloat(, 0);
             AC_AddLoggedValues($aid, $cs, [['TimeStamp' => $ts, 'Value' => $cost]]); //$this->SetValueFloat(, 0);
-            $this->SendDebug(__FUNCTION__, 'Log Values for full filling!');
+            $this->LogDebug(__FUNCTION__, 'Log Values for full filling!');
             $reaggregate = true;
         }
 
         // AC_ReAggregateVariable
         if ($reaggregate) {
-            $status = true;
-            $status = $status && AC_ReAggregateVariable($aid, $ks);
+            $status = AC_ReAggregateVariable($aid, $ks);
             $status = $status && AC_ReAggregateVariable($aid, $ls);
             $status = $status && AC_ReAggregateVariable($aid, $ps);
             $status = $status && AC_ReAggregateVariable($aid, $as);
             $status = $status && AC_ReAggregateVariable($aid, $cs);
-            $this->SendDebug(__FUNCTION__, 'Status ReAggregate: ' . boolval($status));
+            $this->LogDebug(__FUNCTION__, 'Status ReAggregate: ' . boolval($status));
         }
     }
 
@@ -606,8 +688,10 @@ class FuelMonitor extends IPSModule
      * @param bool $state Variable archive logging state
      * @param int $type Variable aggregation type
      * @param bool $zero Ignore null values
+     * 
+     * @return void
      */
-    private function ArchiveVariable($ac, $var, $state, $type, $zero)
+    private function ArchiveVariable(int $ac, int $var, bool $state, int $type, bool $zero): void
     {
         AC_SetLoggingStatus($ac, $var, $state);
         if ($state) {
@@ -623,16 +707,17 @@ class FuelMonitor extends IPSModule
      *
      * @param int $ac Arcive Control ID
      * @param int $var Variable ID
+     * 
      * @return bool True if enabled, otherwise false.
      */
-    private function ArchiveCheck($ac, $var)
+    private function ArchiveCheck(int $ac, int $var): bool
     {
         $state = @AC_GetLoggingStatus($ac, $var);
         if ($state) {
             $lastValue = AC_GetLoggedValues($ac, $var, 0, 0, 1);
             if (!empty($lastValue) && (count($lastValue) == 1) && ($lastValue[0]['Value'] == 0)) {
                 $ret = AC_DeleteVariableData($ac, $var, $lastValue[0]['TimeStamp'], 0);
-                $this->SendDebug(__FUNCTION__, 'Null values (#' . $var . ') - removed!');
+                $this->LogDebug(__FUNCTION__, 'Null values (#' . $var . ') - removed!');
             }
         }
         return $state;
