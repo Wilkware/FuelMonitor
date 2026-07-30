@@ -5,6 +5,10 @@ declare(strict_types=1);
 /** Generell funktions */
 require_once __DIR__ . '/../libs/_traits.php';
 
+/** Namespaced traits */
+use Wilkware\FuelMonitor\DebugHelper;
+use Wilkware\FuelMonitor\VariableHelper;
+
 /**
  * Class FuelMonitor
  */
@@ -14,7 +18,6 @@ class FuelMonitor extends IPSModuleStrict
     // Traits
     // -------------------------------------------------------------------------
 
-    use ProfileHelper;
     use DebugHelper;
     use VariableHelper;
 
@@ -35,29 +38,8 @@ class FuelMonitor extends IPSModuleStrict
     // Constants (Min/Max)
     // -------------------------------------------------------------------------
 
-    /** @var int Min milage (0 km) */
-    private const MIN_MILEAGE = 0;
-
-    /** @var int Max milage (1.000.0000 km) */
-    private const MAX_MILEAGE = 1000000;
-
-    /** @var int Min capacity (0 Liter) */
-    private const MIN_CAPACITY = 0;
-
-    /** @var int Max capacity (1000 Liter) */
-    private const MAX_CAPACITY = 1000;
-
-    /** @var int Min price (0,000 Euro) */
-    private const MIN_PRICE = 0;
-
-    /** @var int Max price (10,000 Euro) */
-    private const MAX_PRICE = 10;
-
-    /** @var int Min invoice (0,000 Euro) */
-    private const MIN_INVOICE = 0;
-
-    /** @var int Max invoice (10,000 Euro) */
-    private const MAX_INVOICE = 10000;
+    /** @var string Date reset constants */
+    private const DATE_RESET = '{"year": -1, "month": -1, "day": -1 }';
 
     // -------------------------------------------------------------------------
     // Methods
@@ -74,93 +56,28 @@ class FuelMonitor extends IPSModuleStrict
         //Never delete this line!
         parent::Create();
 
-        // Profile Time
-        $time = [
-            [0, 'Today', '', 0xFFFF00],
-            [1, 'Yesterday', '', 0xFFFF00],
-            [2, 'Day before yesterday', '', 0xFFFF00],
-        ];
-        $this->RegisterProfileInteger('SVM.Time', 'Clock', '', '', 0, 0, 0, $time);
-        // Profile Mileage
-        $mileage = [
-            [-100, '-100', '', -1],
-            [-10, '-10', '', -1],
-            [-1, '-1', '', -1],
-            [0, '%d km', '', 0x00FF00],
-            [1000001, '+1', '', -1],
-            [1000010, '+10', '', -1],
-            [1000100, '+100', '', -1],
-        ];
-        $this->RegisterProfileInteger('SVM.Mileage', 'Speedo', '', '', 0, 0, 0, $mileage);
-        // Profile TankCapacity
-        $capacity = [
-            [-10, '-10,00', '', -1],
-            [-1, '-1,00', '', -1],
-            [-0.1, '-0,10', '', -1],
-            [-0.01, '-0,01', '', -1],
-            [0, '%0.2f Liter', '', 0x0000FF],
-            [1000.01, '+0,01', '', -1],
-            [1000.1, '+0,10', '', -1],
-            [1001, '+1,00', '', -1],
-            [1010, '+10,00', '', -1],
-        ];
-        $this->RegisterProfileFloat('SVM.TankCapacity', 'Gauge', '', '', 0, 0, 0, 2, $capacity);
-        // Profile LitrePrice
-        $price = [
-            [-0.1, '-0,1', '', -1],
-            [-0.01, '-0,01', '', -1],
-            [-0.001, '-0,001', '', -1],
-            [0, '%0.3f €', '', 0x808080],
-            [10.001, '+0,001', '', -1],
-            [10.01, '+0,01', '', -1],
-            [10.1, '+0,1', '', -1],
-        ];
-        $this->RegisterProfileFloat('SVM.LitrePrice', 'Euro', '', '', 0, 0, 0, 3, $price);
-        // Profile TankBill
-        $bill = [
-            [-10, '-10,00', '', -1],
-            [-1, '-1,00', '', -1],
-            [-0.1, '-0,10', '', -1],
-            [-0.01, '-0,01', '', -1],
-            [0, '%0.2f €', '', 0x8000FF],
-            [10000.01, '+0,01', '', -1],
-            [10000.1, '+0,10', '', -1],
-            [10001, '+1,00', '', -1],
-            [10010, '+10,00', '', -1],
-        ];
-        $this->RegisterProfileFloat('SVM.TankBill', 'Euro', '', '', 0, 0, 0, 2, $bill);
-        // Profile RefuelTyp
-        $refuel = [
-            [0, 'Initial filling', '', 0x0080FF],
-            [1, 'Partial refuelling', '', 0xFFFF80],
-            [2, 'Full refuelling', '', 0x80FF80],
-        ];
-        $this->RegisterProfileInteger('SVM.RefuelTyp', 'Tap', '', '', 0, 0, 0, $refuel);
-        // Profile SaveInput
-        $save = [
-            [0, '►', '', 0xFF8000],
-        ];
-        $this->RegisterProfileInteger('SVM.SaveInput', 'Script', '', '', 0, 0, 0, $save);
+        // Car data ...
+        $this->RegisterPropertyString('BrandModel', '');
+        $this->RegisterPropertyString('LicensePlate', '');
+        $this->RegisterPropertyString('FirstRegistration', self::DATE_RESET);
+        $this->RegisterPropertyInteger('InitialMileage', 0);
+        $this->RegisterPropertyInteger('VehicleImage', 1);
 
-        // Profile Kilometers, Liters & Price
-        $this->RegisterProfileInteger('SVM.Kilometers', 'Distance', '', ' km', 0, 0, 2);
-        $this->RegisterProfileFloat('SVM.Liters', 'Tap', '', ' l', 0, 0, 0, 2);
-        $this->RegisterProfileFloat('SVM.Price', 'Euro', '', ' €', 0, 0, 0, 3);
-        $this->RegisterProfileFloat('SVM.Average', 'Graph', '', ' l/100km', 0, 0, 0, 2);
-        $this->RegisterProfileFloat('SVM.Costs', 'Graph', '', ' €/100km', 0, 0, 0, 2);
+        // Service ...
+        $this->RegisterPropertyBoolean('EnableTuev', false);
+        $this->RegisterPropertyInteger('TuevReminderDays', 0);
+        $this->RegisterPropertyBoolean('EnableService', false);
+        $this->RegisterPropertyBoolean('ServiceByMileage', false);
+        $this->RegisterPropertyInteger('ServiceReminderKm', 0);
+        $this->RegisterPropertyBoolean('ServiceByDate', false);
+        $this->RegisterPropertyInteger('ServiceReminderDays', 0);
 
-        // Register property variables
+        // Visualisation ...
+        $this->RegisterPropertyBoolean('ShowBrandModel', true);
+        $this->RegisterPropertyInteger('ColorNormal', 0x4CAF50);
+        $this->RegisterPropertyInteger('ColorWarning', 0xFFC107);
+        $this->RegisterPropertyInteger('ColorCritical', 0xF44336);
 
-        // Calculation ...
-        $this->RegisterPropertyBoolean('CalcQuantity', false);
-        $this->RegisterPropertyBoolean('QuantityByPrice', false);
-        $this->RegisterPropertyBoolean('QuantityByInvoice', false);
-        $this->RegisterPropertyBoolean('CalcPrice', false);
-        $this->RegisterPropertyBoolean('PriceByQuantity', false);
-        $this->RegisterPropertyBoolean('PriceByInvoice', false);
-        $this->RegisterPropertyBoolean('CalcInvoice', false);
-        $this->RegisterPropertyBoolean('InvoiceByQuantity', false);
-        $this->RegisterPropertyBoolean('InvoiceByPrice', false);
         // Advanced ...
         $this->RegisterPropertyBoolean('FutureDate', true);
         $this->RegisterPropertyBoolean('MileageDecreases', true);
@@ -170,54 +87,36 @@ class FuelMonitor extends IPSModuleStrict
         $ilm = IPS_GetInstanceListByModuleID(self::ARCHIVE_GUID);
         $aid = $ilm[0];
         // Register status variables + statistics
-        if($this->RegisterVariableInteger('kilometers', $this->Translate('Kilometers'), 'SVM.Kilometers', 0)) {
+        if ($this->RegisterVariableInteger('kilometers', $this->Translate('Kilometers'), ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_INPUT, 'SUFFIX' => ' km'], 0)) {
             $vid = @$this->GetIDForIdent('kilometers');
             $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_COUNTER, true);
         }
-        if($this->RegisterVariableFloat('liters', $this->Translate('Liters'), 'SVM.Liters', 1)) {
+        if ($this->RegisterVariableFloat('liters', $this->Translate('Liters'), ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_INPUT, 'SUFFIX' => ' l', 'DIGITS' => 2], 1)) {
             $vid = @$this->GetIDForIdent('liters');
             $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_COUNTER, true);
         }
-        if($this->RegisterVariableFloat('price', $this->Translate('Price'), 'SVM.Price', 2)) {
+        if ($this->RegisterVariableFloat('price', $this->Translate('Price'), ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_INPUT, 'SUFFIX' => ' €', 'DIGITS' => 3], 2)) {
             $vid = @$this->GetIDForIdent('price');
             $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_DEFAULT, false);
         }
-        if($this->RegisterVariableFloat('average', $this->Translate('Average fuel consumption'), 'SVM.Average', 3)) {
+        if ($this->RegisterVariableFloat('average', $this->Translate('Average fuel consumption'), ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_INPUT, 'SUFFIX' => ' l/100km', 'DIGITS' => 2], 3)) {
             $vid = @$this->GetIDForIdent('average');
             $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_DEFAULT, false);
         }
-        if($this->RegisterVariableFloat('costs', $this->Translate('Costs'), 'SVM.Costs', 4)) {
+        if ($this->RegisterVariableFloat('costs', $this->Translate('Costs'), ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_INPUT, 'SUFFIX' => ' €/100km', 'DIGITS' => 2], 4)) {
             $vid = @$this->GetIDForIdent('costs');
             $this->ArchiveVariable($aid, $vid, true, self::ARCHIVE_DEFAULT, false);
         }
 
-        // Register status variables + actions
-        $this->RegisterVariableInteger('time', $this->Translate('Time'), 'SVM.Time', 10);
-        $this->EnableAction('time');
-        $this->RegisterVariableInteger('date', $this->Translate('Date'), '~UnixTimestampDate', 11);
-        $this->SetValueInteger('date', time());
-        $this->EnableAction('date');
-        $this->RegisterVariableInteger('mileage', $this->Translate('Mileage'), 'SVM.Mileage', 12);
-        // $this->SetValueInteger('mileage', 1000);
-        $this->EnableAction('mileage');
-        $this->RegisterVariableFloat('quantity', $this->Translate('Quantity'), 'SVM.TankCapacity', 13);
-        //$this->SetValueFloat('quantity', 50.00);
-        $this->EnableAction('quantity');
-        $this->RegisterVariableFloat('price_per_litre', $this->Translate('Price per litre'), 'SVM.LitrePrice', 14);
-        //$this->SetValueFloat('price_per_litre', 1.999);
-        $this->EnableAction('price_per_litre');
-        $this->RegisterVariableFloat('invoice', $this->Translate('Invoice'), 'SVM.TankBill', 15);
-        //$this->SetValueFloat('invoice', 99.95);
-        $this->EnableAction('invoice');
-        $this->RegisterVariableInteger('refuelling', $this->Translate('Refuelling'), 'SVM.RefuelTyp', 16);
-        //$this->SetValueInteger('refuelling', 0);
-        $this->EnableAction('refuelling');
-        $this->RegisterVariableInteger('save_input', $this->Translate('Save'), 'SVM.SaveInput', 17);
-        //$this->SetValueInteger('save_input', 0);
-        $this->EnableAction('save_input');
-
-        // Register attributes
+        // Attributes for partial-refuel consumption tracking
         $this->RegisterAttributeString('History', '[]');
+        // LastFullTankKM = odometer reading at the last full refuel (reference point)
+        $this->RegisterAttributeInteger('LastFullTankKM', 0);
+        // LiterSinceLastFullTank = liters accumulated since that reference point (partial refuels add up here)
+        $this->RegisterAttributeFloat('LiterSinceLastFullTank', 0.0);
+
+        // Activate HTML-SDK visualization for this instance (custom tile via GetVisualizationTile()/module.html)
+        $this->SetVisualizationType(1);
     }
 
     /**
@@ -227,7 +126,6 @@ class FuelMonitor extends IPSModuleStrict
      * @return void
      */
     public function Destroy(): void
-
     {
         parent::Destroy();
     }
@@ -251,17 +149,22 @@ class FuelMonitor extends IPSModuleStrict
         $form['actions'][1]['items'][2]['caption'] = sprintf('v%s.%d', $lib['Version'], $lib['Build']);
 
         // Read Setup
-        $quantity = $this->ReadPropertyBoolean('CalcQuantity');
-        $price = $this->ReadPropertyBoolean('CalcPrice');
-        $invoice = $this->ReadPropertyBoolean('CalcInvoice');
+        $tuev = $this->ReadPropertyBoolean('EnableTuev');
+        $service = $this->ReadPropertyBoolean('EnableService');
+        $milage = $this->ReadPropertyBoolean('ServiceByMileage');
+        $date = $this->ReadPropertyBoolean('ServiceByDate');
 
-        // Enable or disable
-        $form['elements'][2]['items'][0]['items'][1]['enabled'] = $quantity;
-        $form['elements'][2]['items'][0]['items'][2]['enabled'] = $quantity;
-        $form['elements'][2]['items'][1]['items'][1]['enabled'] = $price;
-        $form['elements'][2]['items'][1]['items'][2]['enabled'] = $price;
-        $form['elements'][2]['items'][2]['items'][1]['enabled'] = $invoice;
-        $form['elements'][2]['items'][2]['items'][2]['enabled'] = $invoice;
+        // Enable or disable tuev
+        $form['elements'][2]['items'][0]['items'][0]['enabled'] = $tuev;
+        $form['elements'][2]['items'][1]['items'][1]['enabled'] = $tuev;
+
+        // Enable or disable service
+        $form['elements'][2]['items'][2]['items'][0]['enabled'] = $service;
+        $form['elements'][2]['items'][3]['items'][1]['enabled'] = $service;
+        $form['elements'][2]['items'][4]['items'][1]['enabled'] = $service && $milage;
+        $form['elements'][2]['items'][5]['items'][1]['enabled'] = $service;
+        $form['elements'][2]['items'][6]['items'][1]['enabled'] = $service && $date;
+
         // return form
         return json_encode($form);
     }
@@ -275,7 +178,61 @@ class FuelMonitor extends IPSModuleStrict
     {
         //Never delete this line!
         parent::ApplyChanges();
-        //      $this->LogDebug(__FUNCTION__, 'Debug = ');
+
+        // If this is still the very first setup (archive completely empty) and an initial
+        // mileage was configured (e.g. when buying a used car), seed the archive with an
+        // "Erstbefüllung" automatically - no need to enter it manually via the tile first.
+        // NOTE: this only fires once - as soon as the archive holds any entry, $first is
+        // false and nothing happens here anymore, even if InitialMileage is edited again.
+        $mi = $this->ReadPropertyInteger('InitialMileage');
+        if ($mi > 0) {
+            $ks = @$this->GetIDForIdent('kilometers');
+            $aid = $this->GetArchiveID();
+            if ($ks != false && $aid !== 0) {
+                $lastValue = AC_GetLoggedValues($aid, $ks, 0, 0, 1);
+                if (empty($lastValue)) {
+                    $this->OnSaveInput(json_encode([
+                        'date'     => date('Y-m-d'),
+                        'type'     => 0,
+                        'mileage'  => $mi,
+                        'quantity' => 0,
+                        'price'    => 0,
+                        'invoice'  => 0,
+                    ]));
+                    $this->LogDebug(__FUNCTION__, 'Auto-seeded Erstbefüllung from InitialMileage: ' . $mi);
+                }
+            }
+        }
+
+        // Service/TÜV due dates
+        $tuev = $this->ReadPropertyBoolean('EnableTuev');
+        $this->MaintainVariable('tuev_due_date', $this->Translate('TÜV due date'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_DATE_TIME], 10, $tuev);
+        $this->MaintainAction('tuev_due_date', $tuev);
+
+        // Suggest an initial TÜV due date from FirstRegistration + 3 years (first inspection in
+        // Germany), but only ONCE - as soon as tuev_due_date has a real value, never overwrite it
+        if ($tuev) {
+            $tuevDue = $this->GetValue('tuev_due_date');
+            if ($tuevDue <= 0) {
+                $firstReg = $this->GetFirstRegistrationTimestamp();
+                if ($firstReg > 0) {
+                    $suggested = strtotime('+3 years', $firstReg);
+                    $this->SetValueInteger('tuev_due_date', $suggested);
+                    $this->LogDebug(__FUNCTION__, 'Auto-suggested tuev_due_date: ' . date('Y-m-d', $suggested));
+                }
+            }
+        }
+
+        $service = $this->ReadPropertyBoolean('EnableService');
+        $milage = $this->ReadPropertyBoolean('ServiceByMileage');
+        $date = $this->ReadPropertyBoolean('ServiceByDate');
+        $this->MaintainVariable('service_due_mileage', $this->Translate('Service due mileage'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_INPUT, 'SUFFIX' => ' km'], 11, $service && $milage);
+        $this->MaintainAction('service_due_mileage', $service && $milage);
+        $this->MaintainVariable('service_due_date', $this->Translate('Service due date'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_DATE_TIME], 12, $service && $date);
+        $this->MaintainAction('service_due_date', $service && $date);
+
+        // Send a complete update message to the display, as parameters may have changed
+        $this->UpdateVisualizationValue($this->GetFullUpdateMessage());
     }
 
     /**
@@ -291,48 +248,17 @@ class FuelMonitor extends IPSModuleStrict
         // Debug output
         $this->LogDebug(__FUNCTION__, $ident . ' => ' . $value);
         switch ($ident) {
-            case 'time':
-                $this->SetValueInteger($ident, $value);
-                $timestamp = strtotime('-' . $value . ' day');
-                $this->SetValueInteger('date', $timestamp);
-                break;
-            case 'date':
-                $now = date('Ymd', time());
-                $date = date('Ymd', $value);
-                // no future time
-                if ($date <= $now) {
-                    $this->SetValueInteger($ident, $value);
-                } else {
-                    $future = $this->ReadPropertyBoolean('FutureDate');
-                    if ($future) {
-                        echo $this->Translate('Date is in the future!');
-                    }
-                }
-                break;
-            case 'mileage':
-                $calc = $this->OnCalcValue($ident, $value, self::MIN_MILEAGE, self::MAX_MILEAGE);
-                $this->SetValueInteger($ident, $calc);
-                break;
-            case 'quantity':
-                $calc = $this->OnCalcValue($ident, $value, self::MIN_CAPACITY, self::MAX_CAPACITY);
-                $this->SetValueFloat($ident, $calc);
-                $this->ModifyByQuantity($calc);
-                break;
-            case 'price_per_litre':
-                $calc = $this->OnCalcValue($ident, $value, self::MIN_PRICE, self::MAX_PRICE);
-                $this->SetValueFloat($ident, $calc);
-                $this->ModifyByPrice($calc);
-                break;
-            case 'invoice':
-                $calc = $this->OnCalcValue($ident, $value, self::MIN_INVOICE, self::MAX_INVOICE);
-                $this->SetValueFloat($ident, $calc);
-                $this->ModifyByInvoice($calc);
-                break;
-            case 'refuelling':
-                $this->SetValueInteger($ident, $value);
-                break;
-            case 'save_input':
+            case 'SaveTankEntry':
                 $this->OnSaveInput($value);
+                break;
+            case 'tuev_due_date':
+            case 'service_due_date':
+                $this->SetValueInteger($ident, (int) $value);
+                $this->UpdateVisualizationValue($this->GetFullUpdateMessage());
+                break;
+            case 'service_due_mileage':
+                $this->SetValueInteger($ident, (int) $value);
+                $this->UpdateVisualizationValue($this->GetFullUpdateMessage());
                 break;
             default:
                 eval('$this->' . $ident . '(\'' . $value . '\');');
@@ -340,217 +266,158 @@ class FuelMonitor extends IPSModuleStrict
     }
 
     /**
-     * Modify quantity calculation.
+     * If the HTML-SDK is to be used, this function must be overwritten in order to return the HTML content.
      *
-     * @param string $value Selection values.
-     * 
+     * @return string Initial display of a representation via HTML SDK
+     */
+    public function GetVisualizationTile(): string
+    {
+        // Add a script to set the values when loading, analogous to changes at runtime
+        // Although the return from GetFullUpdateMessage is already JSON-encoded, json_encode is still executed a second time
+        // This adds quotation marks to the string and any quotation marks within it are escaped correctly
+        $handling = '<script>handleMessage(' . json_encode($this->GetFullUpdateMessage()) . ');</script>';
+        // Add static HTML from file
+        $module = file_get_contents(__DIR__ . '/module.html');
+        // Important: $initialHandling at the end, as the handleMessage function is only defined in the HTML
+        return $module . $handling;
+    }
+
+    /**
+     * Modify TÜV reminder.
+     *
+     * @param bool $value Selection values
+     *
      * @return void
      */
-    protected function OnChangeQuality($value): void
+    protected function OnChangeTuev(bool $value): void
     {
-        $data = unserialize($value);
-        //$this->LogDebug(__FUNCTION__, $data);
-        // Enable or disable?
-        $enabled = $data['c4q'];
-        $this->UpdateFormField('QuantityByPrice', 'enabled', $enabled);
-        $this->UpdateFormField('QuantityByInvoice', 'enabled', $enabled);
-        // Safty check - only one dependency allowed
-        if ($enabled) {
-            if ($data['q@p']) {
-                $this->UpdateFormField('InvoiceByPrice', 'value', false);
+        $this->LogDebug(__FUNCTION__, var_export($value, true));
+        $this->UpdateFormField('TuevReminderDays', 'enabled', $value);
+    }
+
+    /**
+     * Modify service remminder.
+     *
+     * @param bool $value Selection values
+     *
+     * @return void
+     */
+    protected function OnChangeService(bool $value): void
+    {
+        $this->LogDebug(__FUNCTION__, var_export($value, true));
+        $this->UpdateFormField('ServiceByMileage', 'enabled', $value);
+        $this->UpdateFormField('ServiceByDate', 'enabled', $value);
+    }
+
+    /**
+     * Modify service my milage remminder.
+     *
+     * @param bool $value Selection values
+     *
+     * @return void
+     */
+    protected function OnChangeServiceByMileage(bool $value): void
+    {
+        $this->UpdateFormField('ServiceReminderKm', 'enabled', $value);
+    }
+
+    /**
+     * Modify service by date remminder.
+     *
+     * @param bool $value Selection value
+     *
+     * @return void
+     */
+    protected function OnChangeServiceByDate(bool $value): void
+    {
+        $this->UpdateFormField('ServiceReminderDays', 'enabled', $value);
+    }
+
+    /**
+     * Writes a value for one of the 5 archived status variables, choosing the right path:
+     * - Today's date: plain SetValue() - Archive Control logs this automatically and correctly
+     *   (with real time-of-day), AND GetValue() stays live. No manual archive call needed.
+     * - Backdated date (Gestern/Vorgestern): SetValue() would log at "now", not at the chosen
+     *   date, so we write directly into the archive via AC_AddLoggedValues() instead. GetValue()
+     *   intentionally stays behind in this case (the backdated entry isn't "the current one").
+     *
+     * @param int $aid Archive Control instance ID.
+     * @param int $varId Variable ID of the status variable.
+     * @param string $ident Ident of the status variable.
+     * @param mixed $value Value to write.
+     * @param bool $isFloat True if the variable is a float, false if integer.
+     * @param int $ts Timestamp of the refuelling entry.
+     *
+     * @return void
+     */
+    private function WriteValue(int $aid, int $varId, string $ident, $value, bool $isFloat, int $ts): void
+    {
+        if (date('Y-m-d', $ts) === date('Y-m-d')) {
+            if ($isFloat) {
+                $this->SetValueFloat($ident, $value);
+            } else {
+                $this->SetValueInteger($ident, $value);
             }
-            if ($data['q@i']) {
-                $this->UpdateFormField('PriceByInvoice', 'value', false);
-            }
+        } else {
+            AC_AddLoggedValues($aid, $varId, [['TimeStamp' => $ts, 'Value' => $value]]);
         }
     }
 
     /**
-     * Modify price per litre calculation.
+     * User has saved a tank entry via the HTML tile (single combined JSON payload).
      *
-     * @param string $value Selection values.
-     * 
+     * Expected payload (JSON): {
+     *   "date": "YYYY-MM-DD",   // refuelling date
+     *   "mileage": int,         // absolute odometer reading
+     *   "quantity": float,      // litres
+     *   "price": float,         // price per litre
+     *   "invoice": float,       // total invoice amount
+     *   "type": int             // 0 = Erstbefuellung, 1 = Teilbetankung, 2 = Volltankung
+     * }
+     *
+     * @param string $value JSON payload as described above.
+     *
      * @return void
      */
-    protected function OnChangePrice($value): void
+    private function OnSaveInput(string $value): void
     {
-        $data = unserialize($value);
-        //$this->LogDebug(__FUNCTION__, $data);
-        // Enable or disable?
-        $enabled = $data['c4p'];
-        $this->UpdateFormField('PriceByQuantity', 'enabled', $enabled);
-        $this->UpdateFormField('PriceByInvoice', 'enabled', $enabled);
-        // Safty check - only one dependency allowed
-        if ($enabled) {
-            if ($data['p@q']) {
-                $this->UpdateFormField('InvoiceByQuantity', 'value', false);
-            }
-            if ($data['p@i']) {
-                $this->UpdateFormField('QuantityByInvoice', 'value', false);
-            }
-        }
-    }
-
-    /**
-     * Modify invoice calculation.
-     *
-     * @param string $value Selection values.
-     * 
-     * @return void
-     */
-    protected function OnChangeInvoice($value): void
-    {
-        $data = unserialize($value);
-        //$this->LogDebug(__FUNCTION__, $data);
-        // Enable or disable?
-        $enabled = $data['c4i'];
-        $this->UpdateFormField('InvoiceByQuantity', 'enabled', $enabled);
-        $this->UpdateFormField('InvoiceByPrice', 'enabled', $enabled);
-        // Safty check - only one dependency allowed
-        if ($enabled) {
-            if ($data['i@q']) {
-                $this->UpdateFormField('PriceByQuantity', 'value', false);
-            }
-            if ($data['i@p']) {
-                $this->UpdateFormField('QuantityByPrice', 'value', false);
-            }
-        }
-    }
-
-    /**
-     * Calculate depends on selection the new profile value
-     *
-     * @param string $ident Ident.
-     * @param mixed $value Value
-     * @param int $min Minimum value.
-     * @param int $max Maximum value.
-     * 
-     * @return int calculated profile value.
-     */
-    private function OnCalcValue($ident, $value, $min, $max): int
-    {
-        $current = $this->GetValue($ident);
-        // special case (direct click)
-        if ($value == $min) {
-            return $current;
-        }
-        // step by step up or down
-        if ($value < $min) {
-            $value = $current - abs(abs($min) - abs($value));
-        }
-        if ($value > $max) {
-            $value = $current + ($value - $max);
-        }
-        // prevent overflow
-        if ($value < $min) {
-            $value = $min;
-        }
-        if ($value > $max) {
-            $value = $max;
-        }
-        // return value
-        return $value;
-    }
-
-    /**
-     * Modify values depends on setup configuration
-     *
-     * @param float $value New quantity value.
-     * 
-     * @return void
-     */
-    private function ModifyByQuantity($value): void
-    {
-        if ($this->ReadPropertyBoolean('CalcPrice')) {
-            if ($this->ReadPropertyBoolean('PriceByQuantity')) {
-                $invoice = $this->GetValue('invoice');
-                $price = round($invoice / $value, 3);
-                $this->SetValueFloat('price_per_litre', $price);
-                $this->LogDebug(__FUNCTION__, 'price_per_litre => ' . $price);
-            }
+        // decode payload
+        $data = json_decode($value, true);
+        if (!is_array($data)) {
+            $this->LogMessage('SaveTankEntry: invalid JSON payload!', KL_ERROR);
+            return;
         }
 
-        if ($this->ReadPropertyBoolean('CalcInvoice')) {
-            if ($this->ReadPropertyBoolean('InvoiceByQuantity')) {
-                $price = $this->GetValue('price_per_litre');
-                $invoice = round($price * $value, 2);
-                $this->SetValueFloat('invoice', $invoice);
-                $this->LogDebug(__FUNCTION__, 'invoice => ' . $invoice);
-            }
-        }
-    }
-
-    /**
-     * Modify values depends on setup configuration
-     *
-     * @param float $value New proce per litre value.
-     * 
-     * @return void
-     */
-    private function ModifyByPrice($value): void
-    {
-        if ($this->ReadPropertyBoolean('CalcQuantity')) {
-            if ($this->ReadPropertyBoolean('QuantityByPrice')) {
-                $invoice = $this->GetValue('invoice');
-                $quantity = round($invoice / $value, 2);
-                $this->SetValueFloat('quantity', $quantity);
-                $this->LogDebug(__FUNCTION__, 'quantity => ' . $quantity);
-            }
-        }
-        if ($this->ReadPropertyBoolean('CalcInvoice')) {
-            if ($this->ReadPropertyBoolean('InvoiceByPrice')) {
-                $quantity = $this->GetValue('quantity');
-                $invoice = round($quantity * $value, 2);
-                $this->SetValueFloat('invoice', $invoice);
-                $this->LogDebug(__FUNCTION__, 'invoice => ' . $invoice);
-            }
-        }
-    }
-
-    /**
-     * Modify values depends on setup configuration
-     *
-     * @param float $value New invoice value.
-     * 
-     * @return void
-     */
-    private function ModifyByInvoice($value): void
-    {
-        if ($this->ReadPropertyBoolean('CalcQuantity')) {
-            if ($this->ReadPropertyBoolean('QuantityByInvoice')) {
-                $price = $this->GetValue('price_per_litre');
-                $quantity = round($value / $price, 2);
-                $this->SetValueFloat('quantity', $quantity);
-                $this->LogDebug(__FUNCTION__, 'quantity => ' . $quantity);
-            }
-        }
-        if ($this->ReadPropertyBoolean('CalcPrice')) {
-            if ($this->ReadPropertyBoolean('PriceByInvoice')) {
-                $quantity = $this->GetValue('quantity');
-                $price = round($value / $quantity, 3);
-                $this->SetValueFloat('price_per_litre', $price);
-                $this->LogDebug(__FUNCTION__, 'price_per_litre => ' . $price);
-            }
-        }
-    }
-
-    /**
-     * User has activate save action.
-     *
-     * @param int $value save value.
-     * 
-     * @return void
-     */
-    private function OnSaveInput($value): void
-    {
         // get data
-        $ts = $this->GetValue('date');
-        $mi = $this->GetValue('mileage');
-        $tq = $this->GetValue('quantity');
-        $pl = $this->GetValue('price_per_litre');
-        $iv = $this->GetValue('invoice');
-        $rt = $this->GetValue('refuelling');
-        $this->LogDebug(__FUNCTION__, 'Date: ' . $ts . ',Milage: ' . $mi . ',Quantity: ' . $tq . ',Price: ' . $pl . ',Invoice: ' . $iv . ',Typ: ' . $rt);
+        $ts = strtotime((string) ($data['date'] ?? 'now'));
+        $mi = (int) ($data['mileage'] ?? 0);
+        $tq = (float) ($data['quantity'] ?? 0);
+        $pl = (float) ($data['price'] ?? 0);
+        $iv = (float) ($data['invoice'] ?? 0);
+        $rt = (int) ($data['type'] ?? 2); // 0 = initial, 1 = partial, 2 = full
+
+        // Plausibility check instead of server-side recalculation: the HTML tile already computes
+        // a self-consistent triangle (see module.html), this only guards against broken/incomplete
+        // data reaching the archive. Erstbefüllung (rt=0) is exempt - 0/0/0 is valid there (reference
+        // point only, e.g. the auto-seed from InitialMileage in ApplyChanges()).
+        if ($rt !== 0) {
+            $expected = round($tq * $pl, 2);
+            if ($tq <= 0 || $pl <= 0 || $iv <= 0 || abs($expected - $iv) > 0.05) {
+                $this->LogDebug(__FUNCTION__, 'Plausibility check failed: Quantity=' . $tq . ', Price=' . $pl . ', Invoice=' . $iv);
+                echo $this->Translate('Quantity, price and invoice do not match!');
+                return;
+            }
+        }
+
+        $this->LogDebug(__FUNCTION__, 'Date: ' . $ts . ',Mileage: ' . $mi . ',Quantity: ' . $tq . ',Price: ' . $pl . ',Invoice: ' . $iv . ',Typ: ' . $rt);
+
+        // future date check (previously handled in the old 'date' RequestAction case)
+        if ($ts > time()) {
+            if ($this->ReadPropertyBoolean('FutureDate')) {
+                echo $this->Translate('Date is in the future!');
+            }
+            return;
+        }
 
         // get IDs
         $ks = $this->GetIDForIdent('kilometers');
@@ -598,7 +465,9 @@ class FuelMonitor extends IPSModuleStrict
             return;
         }
 
-        $km = $this->GetValue('kilometers');
+        // last known mileage comes straight from the archive (not GetValue(), see design notes
+        // on why 'kilometers' is no longer kept live in sync) - reuses $lastValue from above
+        $km = !empty($lastValue) ? $lastValue[0]['Value'] : 0;
         if ($km >= $mi) {
             if (($rt > 0) || $initial) {
                 if ($decrease) {
@@ -636,59 +505,70 @@ class FuelMonitor extends IPSModuleStrict
             $this->WriteAttributeString('History', '[]');
         }
 
-        $reaggregate = false;
-
         // calculate
         if ($rt == 0) {
-            // save
-            AC_AddLoggedValues($aid, $ks, [['TimeStamp' => $ts, 'Value' => $mi]]); //$this->SetValueInteger(, $mi);
-            AC_AddLoggedValues($aid, $ls, [['TimeStamp' => $ts, 'Value' => $tq]]); //$this->SetValueFloat(, $tq);
-            AC_AddLoggedValues($aid, $ps, [['TimeStamp' => $ts, 'Value' => $pl]]); //$this->SetValueFloat(, $pl);
-            AC_AddLoggedValues($aid, $as, [['TimeStamp' => $ts, 'Value' => 0]]); //$this->SetValueFloat(, 0);
-            AC_AddLoggedValues($aid, $cs, [['TimeStamp' => $ts, 'Value' => 0]]); //$this->SetValueFloat(, 0);
+            // Initial filling: establishes the reference point, no consumption possible yet
+            $this->WriteValue($aid, $ks, 'kilometers', $mi, false, $ts);
+            $this->WriteValue($aid, $ls, 'liters', $tq, true, $ts);
+            $this->WriteValue($aid, $ps, 'price', $pl, true, $ts);
+            $this->WriteValue($aid, $as, 'average', 0, true, $ts);
+            $this->WriteValue($aid, $cs, 'costs', 0, true, $ts);
+            $this->WriteAttributeInteger('LastFullTankKM', $mi);
+            $this->WriteAttributeFloat('LiterSinceLastFullTank', 0.0);
             $this->LogDebug(__FUNCTION__, 'Log Values for initial filling!');
-            $reaggregate = true;
         } elseif ($rt == 1) {
+            // Partial refuelling: log raw data, no consumption calculation yet -
+            // just accumulate the litres for the next full refuel's calculation.
+            $this->WriteValue($aid, $ks, 'kilometers', $mi, false, $ts);
+            $this->WriteValue($aid, $ls, 'liters', $tq, true, $ts);
+            $this->WriteValue($aid, $ps, 'price', $pl, true, $ts);
+            $this->WriteValue($aid, $as, 'average', 0, true, $ts);
+            $this->WriteValue($aid, $cs, 'costs', 0, true, $ts);
+            $literSum = $this->ReadAttributeFloat('LiterSinceLastFullTank') + $tq;
+            $this->WriteAttributeFloat('LiterSinceLastFullTank', $literSum);
+            $this->LogDebug(__FUNCTION__, 'Log Values for partial filling! LiterSinceLastFullTank => ' . $literSum);
         } else {
-            $lastks = AC_GetLoggedValues($aid, $ks, 0, 0, 1);
-            $this->LogDebug(__FUNCTION__, $lastks);
-            $lastls = AC_GetLoggedValues($aid, $ls, 0, 0, 1);
-            $this->LogDebug(__FUNCTION__, $lastls);
-            $distance = $mi - $lastks[0]['Value'];
-            $this->LogDebug(__FUNCTION__, 'Distance: ' . $distance);
-            $consumption = ($tq * 100) / $distance;
+            // Full refuelling: closes the measurement interval since the last full refuel (Volltankmethode),
+            // including any partial refuels logged in between.
+            $literSum = $this->ReadAttributeFloat('LiterSinceLastFullTank') + $tq;
+            $lastFullTankKM = $this->ReadAttributeInteger('LastFullTankKM');
+            $distance = $mi - $lastFullTankKM;
+            $this->LogDebug(__FUNCTION__, 'Distance since last full tank: ' . $distance . ', Liters since last full tank: ' . $literSum);
+            $consumption = $distance > 0 ? ($literSum * 100) / $distance : 0;
             $this->LogDebug(__FUNCTION__, 'Consumption: ' . $consumption);
             $cost = $pl * $consumption;
             $this->LogDebug(__FUNCTION__, 'Costs: ' . $cost);
-            AC_AddLoggedValues($aid, $ks, [['TimeStamp' => $ts, 'Value' => $mi]]); //$this->SetValueInteger(, $mi);
-            AC_AddLoggedValues($aid, $ls, [['TimeStamp' => $ts, 'Value' => $tq]]); //$this->SetValueFloat(, $tq);
-            AC_AddLoggedValues($aid, $ps, [['TimeStamp' => $ts, 'Value' => $pl]]); //$this->SetValueFloat(, $pl);
-            AC_AddLoggedValues($aid, $as, [['TimeStamp' => $ts, 'Value' => $consumption]]); //$this->SetValueFloat(, 0);
-            AC_AddLoggedValues($aid, $cs, [['TimeStamp' => $ts, 'Value' => $cost]]); //$this->SetValueFloat(, 0);
+            $this->WriteValue($aid, $ks, 'kilometers', $mi, false, $ts);
+            $this->WriteValue($aid, $ls, 'liters', $tq, true, $ts);
+            $this->WriteValue($aid, $ps, 'price', $pl, true, $ts);
+            $this->WriteValue($aid, $as, 'average', $consumption, true, $ts);
+            $this->WriteValue($aid, $cs, 'costs', $cost, true, $ts);
+            // Reset consumption-tracking attributes: this full refuel becomes the new reference point
+            $this->WriteAttributeInteger('LastFullTankKM', $mi);
+            $this->WriteAttributeFloat('LiterSinceLastFullTank', 0.0);
             $this->LogDebug(__FUNCTION__, 'Log Values for full filling!');
-            $reaggregate = true;
         }
 
         // AC_ReAggregateVariable
-        if ($reaggregate) {
-            $status = AC_ReAggregateVariable($aid, $ks);
-            $status = $status && AC_ReAggregateVariable($aid, $ls);
-            $status = $status && AC_ReAggregateVariable($aid, $ps);
-            $status = $status && AC_ReAggregateVariable($aid, $as);
-            $status = $status && AC_ReAggregateVariable($aid, $cs);
-            $this->LogDebug(__FUNCTION__, 'Status ReAggregate: ' . boolval($status));
-        }
+        $status = AC_ReAggregateVariable($aid, $ks);
+        $status = $status && AC_ReAggregateVariable($aid, $ls);
+        $status = $status && AC_ReAggregateVariable($aid, $ps);
+        $status = $status && AC_ReAggregateVariable($aid, $as);
+        $status = $status && AC_ReAggregateVariable($aid, $cs);
+        $this->LogDebug(__FUNCTION__, 'Status ReAggregate: ' . boolval($status));
+        // Refresh the tile (new history entry, updated last-known values)
+        $this->UpdateVisualizationValue($this->GetFullUpdateMessage());
     }
 
     /**
-     * Control Archive Variables
+     * ArchiveVariable
      *
-     * @param int $ac Arcive Control ID
-     * @param int $var Variable ID
-     * @param bool $state Variable archive logging state
-     * @param int $type Variable aggregation type
-     * @param bool $zero Ignore null values
-     * 
+     * @param int $ac
+     * @param int $var
+     * @param bool $state
+     * @param int $type
+     * @param bool $zero
+     *
      * @return void
      */
     private function ArchiveVariable(int $ac, int $var, bool $state, int $type, bool $zero): void
@@ -707,7 +587,7 @@ class FuelMonitor extends IPSModuleStrict
      *
      * @param int $ac Arcive Control ID
      * @param int $var Variable ID
-     * 
+     *
      * @return bool True if enabled, otherwise false.
      */
     private function ArchiveCheck(int $ac, int $var): bool
@@ -721,5 +601,248 @@ class FuelMonitor extends IPSModuleStrict
             }
         }
         return $state;
+    }
+
+    /**
+     * Get the (first) Archive Control instance ID.
+     *
+     * @return int Archive Control instance ID, or 0.
+     */
+    private function GetArchiveID(): int
+    {
+        $ilm = IPS_GetInstanceListByModuleID(self::ARCHIVE_GUID);
+        return @$ilm[0] ?? 0;
+    }
+
+    /**
+     * Parses the FirstRegistration property (SelectDate JSON: {"year":Y,"month":M,"day":D})
+     * into a Unix timestamp.
+     *
+     * @return int Timestamp, or 0 if not set.
+     */
+    private function GetFirstRegistrationTimestamp(): int
+    {
+        $raw = $this->ReadPropertyString('FirstRegistration');
+        $data = json_decode($raw, true);
+        if (!is_array($data) || ($data['year'] ?? -1) < 0) {
+            return 0;
+        }
+        return mktime(0, 0, 0, $data['month'], $data['day'], $data['year']);
+    }
+
+    /**
+     * Computes the TÜV/Service badge status (normal/warning/critical), using the configured
+     * badge colors. Returns null for a badge if it is disabled in the configuration.
+     *
+     * @return array<mixed> Badge data for the HTML tile.
+     */
+    private function GetServiceBadges(): array
+    {
+        $colors = [
+            'normal'   => $this->ReadPropertyInteger('ColorNormal'),
+            'warning'  => $this->ReadPropertyInteger('ColorWarning'),
+            'critical' => $this->ReadPropertyInteger('ColorCritical'),
+        ];
+
+        $badges = [
+            'colors'  => $colors,
+            'tuev'    => null,
+            'service' => null,
+            // Raw values + which fields are actually in use, so the tile can offer manual
+            // correction (e.g. TÜV appointment missed or done later than suggested).
+            'edit' => [
+                'enableTuev'           => $this->ReadPropertyBoolean('EnableTuev'),
+                'tuevDate'             => @$this->GetValue('tuev_due_date') ?? null,
+                'enableServiceDate'    => $this->ReadPropertyBoolean('EnableService') && $this->ReadPropertyBoolean('ServiceByDate'),
+                'serviceDate'          => @$this->GetValue('service_due_date') ?? null,
+                'enableServiceMileage' => $this->ReadPropertyBoolean('EnableService') && $this->ReadPropertyBoolean('ServiceByMileage'),
+                'serviceMileage'       => @$this->GetValue('service_due_mileage') ?? null,
+            ],
+        ];
+        $now = time();
+
+        // TÜV - date based only
+        if ($this->ReadPropertyBoolean('EnableTuev')) {
+            $due = $this->GetValue('tuev_due_date');
+            if ($due > 0) {
+                $daysLeft = (int) floor(($due - $now) / 86400);
+                $reminder = $this->ReadPropertyInteger('TuevReminderDays');
+                $status = $daysLeft <= 0 ? 'critical' : ($daysLeft <= $reminder ? 'warning' : 'normal');
+                $badges['tuev'] = [
+                    'status' => $status,
+                    'label'  => 'TÜV',
+                    'text'   => $daysLeft >= 0 ? $daysLeft . ' Tage' : 'überfällig',
+                ];
+            }
+        }
+
+        // Service - by mileage and/or date, whichever is closer/more urgent wins the badge
+        if ($this->ReadPropertyBoolean('EnableService')) {
+            $candidates = [];
+
+            if ($this->ReadPropertyBoolean('ServiceByDate')) {
+                $due = $this->GetValue('service_due_date');
+                if ($due > 0) {
+                    $daysLeft = (int) floor(($due - $now) / 86400);
+                    $reminder = $this->ReadPropertyInteger('ServiceReminderDays');
+                    $status = $daysLeft <= 0 ? 'critical' : ($daysLeft <= $reminder ? 'warning' : 'normal');
+                    $candidates[] = [
+                        'status' => $status,
+                        'rank'   => $daysLeft,
+                        'text'   => $daysLeft >= 0 ? $daysLeft . ' Tage' : 'überfällig',
+                    ];
+                }
+            }
+            if ($this->ReadPropertyBoolean('ServiceByMileage')) {
+                $due = $this->GetValue('service_due_mileage');
+                if ($due > 0) {
+                    $ks = @$this->GetIDForIdent('kilometers');
+                    $current = $ks != false ? $this->GetValue('kilometers') : 0;
+                    $kmLeft = $due - $current;
+                    $reminder = $this->ReadPropertyInteger('ServiceReminderKm');
+                    $status = $kmLeft <= 0 ? 'critical' : ($kmLeft <= $reminder ? 'warning' : 'normal');
+                    $candidates[] = [
+                        'status' => $status,
+                        'rank'   => $kmLeft,
+                        'text'   => $kmLeft >= 0 ? $kmLeft . ' km' : 'überfällig',
+                    ];
+                }
+            }
+
+            if (!empty($candidates)) {
+                // Rank by status severity first (critical beats warning beats normal) - the raw
+                // "rank" values are in different units (days vs. km) and can't be compared
+                // directly against each other, only used to order within the same status.
+                $severity = ['critical' => 0, 'warning' => 1, 'normal' => 2];
+                usort($candidates, function ($a, $b) use ($severity)
+                {
+                    $sa = $severity[$a['status']];
+                    $sb = $severity[$b['status']];
+                    if ($sa !== $sb) {
+                        return $sa <=> $sb;
+                    }
+                    return $a['rank'] <=> $b['rank'];
+                });
+                $winner = $candidates[0];
+                $badges['service'] = [
+                    'status' => $winner['status'],
+                    'label'  => 'Service',
+                    'text'   => $winner['text'],
+                ];
+            }
+        }
+
+        return $badges;
+    }
+
+    /**
+     * Returns the vehicle image (from the VehicleImage media property) as a data URI,
+     * so it can be used directly as a CSS background-image without a separate HTTP route.
+     *
+     * NOTE: relies on IPS_GetMediaContent() returning base64-encoded content and on the
+     * media object existing - please double check this against your Symcon version, I
+     * could not verify the exact behaviour with certainty.
+     *
+     * @return string Data URI, or empty string if no image is configured.
+     */
+    private function GetVehicleImageDataUri(): string
+    {
+        $mediaId = $this->ReadPropertyInteger('VehicleImage');
+        if ($mediaId <= 1) {
+            return '';
+        }
+        $media = @IPS_GetMedia($mediaId);
+        if ($media === false) {
+            return '';
+        }
+        $ext = strtolower(pathinfo($media['MediaFile'], PATHINFO_EXTENSION));
+        $mime = match ($ext) {
+            'png'   => 'image/png',
+            'gif'   => 'image/gif',
+            'webp'  => 'image/webp',
+            default => 'image/jpeg',
+        };
+        $content = @IPS_GetMediaContent($mediaId);
+        if ($content === false || $content === '') {
+            return '';
+        }
+        return 'data:' . $mime . ';base64,' . $content;
+    }
+
+    /**
+     * Fetches one exact logged value at a given timestamp (used to line up the 5 archived
+     * variables, which are always written together with the same timestamp per entry).
+     *
+     * @param int $aid Archive Control instance ID.
+     * @param int $varId Variable ID.
+     * @param int $ts Exact timestamp to look up.
+     *
+     * @return float The logged value, or 0 if none found.
+     */
+    private function GetLoggedValueAt(int $aid, int $varId, int $ts): float
+    {
+        $rows = AC_GetLoggedValues($aid, $varId, $ts, $ts, 1);
+        return !empty($rows) ? (float) $rows[0]['Value'] : 0.0;
+    }
+
+    /**
+     * Assembles the last $limit refuelling entries (correlated across the 5 archived
+     * variables by timestamp) for display in the tile's history list.
+     *
+     * @param int $aid Archive Control instance ID.
+     * @param int $limit Maximum number of entries.
+     *
+     * @return array<int,array{timestamp:int,mileage:int,liters:float,price:float,average:float,costs:float}> List of entries, most recent first.
+     *
+     */
+    private function GetHistory(int $aid, int $limit): array
+    {
+        $ks = $this->GetIDForIdent('kilometers');
+        $ls = $this->GetIDForIdent('liters');
+        $ps = $this->GetIDForIdent('price');
+        $as = $this->GetIDForIdent('average');
+        $cs = $this->GetIDForIdent('costs');
+
+        $rows = AC_GetLoggedValues($aid, $ks, 0, 0, $limit);
+        $history = [];
+        foreach ($rows as $row) {
+            $ts = $row['TimeStamp'];
+            $history[] = [
+                'timestamp' => $ts,
+                'mileage'   => (int) $row['Value'],
+                'liters'    => $this->GetLoggedValueAt($aid, $ls, $ts),
+                'price'     => $this->GetLoggedValueAt($aid, $ps, $ts),
+                'average'   => $this->GetLoggedValueAt($aid, $as, $ts),
+                'costs'     => $this->GetLoggedValueAt($aid, $cs, $ts),
+            ];
+        }
+        return $history;
+    }
+
+    /**
+     * Generate a message that updates all elements in the HTML display.
+     *
+     * @return string JSON encoded message information
+     */
+    private function GetFullUpdateMessage(): string
+    {
+        $result = [
+            'vehicleImage'   => $this->GetVehicleImageDataUri(),
+            'licensePlate'   => $this->ReadPropertyString('LicensePlate'),
+            'brandModel'     => $this->ReadPropertyString('BrandModel'),
+            'showBrandModel' => $this->ReadPropertyBoolean('ShowBrandModel'),
+            'badges'         => $this->GetServiceBadges(),
+            'history'        => [],
+        ];
+
+        $aid = $this->GetArchiveID();
+        if ($aid !== 0) {
+            $result['history'] = $this->GetHistory($aid, 20);
+        }
+
+        $this->LogDebug(__FUNCTION__, json_encode($result));
+
+        // send it
+        return json_encode($result);
     }
 }

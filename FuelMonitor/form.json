@@ -27,31 +27,23 @@
         },
         {
             "type": "ExpansionPanel",
-            "caption": "🧮 Calculation of tank values ...",
+            "caption": "🚗 Vehicle data ...",
             "items": [
                 {
                     "type": "RowLayout",
                     "items": [
                         {
-                            "type": "CheckBox",
-                            "caption": "... calculate quantity when changing",
-                            "name": "CalcQuantity",
-                            "width": "400px",
-                            "onChange": "IPS_RequestAction($id,'OnChangeQuality',serialize(['c4q'=>$CalcQuantity, 'q@p'=>$QuantityByPrice, 'q@i'=>$QuantityByInvoice, 'c4p'=>$CalcPrice, 'p@q'=>$PriceByQuantity, 'p@i'=>$PriceByInvoice, 'c4i'=>$CalcInvoice,  'i@q'=>$InvoiceByQuantity, 'i@p'=>$InvoiceByPrice]));"
+                            "type": "ValidationTextBox",
+                            "caption": "Brand / model:",
+                            "name": "BrandModel",
+                            "width": "250px"
                         },
                         {
-                            "type": "CheckBox",
-                            "caption": "the price per litre",
-                            "name": "QuantityByPrice",
-                            "width": "250px",
-                            "onChange": "IPS_RequestAction($id,'OnChangeQuality',serialize(['c4q'=>$CalcQuantity, 'q@p'=>$QuantityByPrice, 'q@i'=>$QuantityByInvoice, 'c4p'=>$CalcPrice, 'p@q'=>$PriceByQuantity, 'p@i'=>$PriceByInvoice, 'c4i'=>$CalcInvoice,  'i@q'=>$InvoiceByQuantity, 'i@p'=>$InvoiceByPrice]));"
-                        },
-                        {
-                            "type": "CheckBox",
-                            "caption": "the invoice amount",
-                            "name": "QuantityByInvoice",
-                            "width": "250px",
-                            "onChange": "IPS_RequestAction($id,'OnChangeQuality',serialize(['c4q'=>$CalcQuantity, 'q@p'=>$QuantityByPrice, 'q@i'=>$QuantityByInvoice, 'c4p'=>$CalcPrice, 'p@q'=>$PriceByQuantity, 'p@i'=>$PriceByInvoice, 'c4i'=>$CalcInvoice,  'i@q'=>$InvoiceByQuantity, 'i@p'=>$InvoiceByPrice]));"
+                            "type": "ValidationTextBox",
+                            "caption": "License plate:",
+                            "name": "LicensePlate",
+                            "validate": "^[A-ZÄÖÜ]{1,3}-[A-Z]{1,2}\\s?[1-9]\\d{0,3}(?:[HE])?$",
+                            "width": "250px"
                         }
                     ]
                 },
@@ -59,52 +51,179 @@
                     "type": "RowLayout",
                     "items": [
                         {
-                            "type": "CheckBox",
-                            "caption": "... calculate litre price when changing",
-                            "name": "CalcPrice",
-                            "width": "400px",
-                            "onChange": "IPS_RequestAction($id,'OnChangePrice',serialize(['c4q'=>$CalcQuantity, 'q@p'=>$QuantityByPrice, 'q@i'=>$QuantityByInvoice, 'c4p'=>$CalcPrice, 'p@q'=>$PriceByQuantity, 'p@i'=>$PriceByInvoice, 'c4i'=>$CalcInvoice,  'i@q'=>$InvoiceByQuantity, 'i@p'=>$InvoiceByPrice]));"
+                            "type": "SelectDate",
+                            "caption": "First registration:",
+                            "name": "FirstRegistration",
+                            "width": "250px"
                         },
                         {
-                            "type": "CheckBox",
-                            "caption": "the quantity",
-                            "name": "PriceByQuantity",
-                            "width": "250px",
-                            "onChange": "IPS_RequestAction($id,'OnChangePrice',serialize(['c4q'=>$CalcQuantity, 'q@p'=>$QuantityByPrice, 'q@i'=>$QuantityByInvoice, 'c4p'=>$CalcPrice, 'p@q'=>$PriceByQuantity, 'p@i'=>$PriceByInvoice, 'c4i'=>$CalcInvoice,  'i@q'=>$InvoiceByQuantity, 'i@p'=>$InvoiceByPrice]));"
-                        },
-                        {
-                            "type": "CheckBox",
-                            "caption": "the invoice amount",
-                            "name": "PriceByInvoice",
-                            "width": "250px",
-                            "onChange": "IPS_RequestAction($id,'OnChangePrice',serialize(['c4q'=>$CalcQuantity, 'q@p'=>$QuantityByPrice, 'q@i'=>$QuantityByInvoice, 'c4p'=>$CalcPrice, 'p@q'=>$PriceByQuantity, 'p@i'=>$PriceByInvoice, 'c4i'=>$CalcInvoice,  'i@q'=>$InvoiceByQuantity, 'i@p'=>$InvoiceByPrice]));"
+                            "type": "NumberSpinner",
+                            "caption": "Mileage:",
+                            "name": "InitialMileage",
+                            "suffix": "km",
+                            "minimum": 0,
+                            "width": "250px"
                         }
                     ]
+                },
+                {
+                    "type": "Label",
+                    "caption": "HINT: Initial mileage (e.g. when buying used).",
+                    "italic": true
+                },
+                {
+                    "type": "SelectMedia",
+                    "caption": "Vehicle image:",
+                    "name": "VehicleImage",
+                    "width": "508px"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "🛠️ Service & TÜV ...",
+            "items": [
+                {
+                    "type": "CheckBox",
+                    "caption": "Enable TÜV monitoring",
+                    "name": "EnableTuev",
+                    "onChange": "IPS_RequestAction($id,'OnChangeTuev', $EnableTuev);"
                 },
                 {
                     "type": "RowLayout",
                     "items": [
                         {
-                            "type": "CheckBox",
-                            "caption": "... calculate invoice when changing",
-                            "name": "CalcInvoice",
-                            "width": "400px",
-                            "onChange": "IPS_RequestAction($id,'OnChangeInvoice',serialize(['c4q'=>$CalcQuantity, 'q@p'=>$QuantityByPrice, 'q@i'=>$QuantityByInvoice, 'c4p'=>$CalcPrice, 'p@q'=>$PriceByQuantity, 'p@i'=>$PriceByInvoice, 'c4i'=>$CalcInvoice,  'i@q'=>$InvoiceByQuantity, 'i@p'=>$InvoiceByPrice]));"
+                            "type": "Label",
+                            "caption": " ",
+                            "width": "40px"
                         },
                         {
-                            "type": "CheckBox",
-                            "caption": "the quantity",
-                            "name": "InvoiceByQuantity",
+                            "type": "NumberSpinner",
+                            "caption": "Remind X days before due date",
+                            "name": "TuevReminderDays",
+                            "suffix": "days",
+                            "minimum": 0,
                             "width": "250px",
-                            "onChange": "IPS_RequestAction($id,'OnChangeInvoice',serialize(['c4q'=>$CalcQuantity, 'q@p'=>$QuantityByPrice, 'q@i'=>$QuantityByInvoice, 'c4p'=>$CalcPrice, 'p@q'=>$PriceByQuantity, 'p@i'=>$PriceByInvoice, 'c4i'=>$CalcInvoice,  'i@q'=>$InvoiceByQuantity, 'i@p'=>$InvoiceByPrice]));"
-                        },
-                        {
-                            "type": "CheckBox",
-                            "caption": "the price per litre",
-                            "name": "InvoiceByPrice",
-                            "width": "250px",
-                            "onChange": "IPS_RequestAction($id,'OnChangeInvoice',serialize(['c4q'=>$CalcQuantity, 'q@p'=>$QuantityByPrice, 'q@i'=>$QuantityByInvoice, 'c4p'=>$CalcPrice, 'p@q'=>$PriceByQuantity, 'p@i'=>$PriceByInvoice, 'c4i'=>$CalcInvoice,  'i@q'=>$InvoiceByQuantity, 'i@p'=>$InvoiceByPrice]));",
                             "enabled": false
+                        }
+                    ]
+                },
+                {
+                    "type": "CheckBox",
+                    "caption": "Enable service reminder",
+                    "name": "EnableService",
+                    "onChange": "IPS_RequestAction($id,'OnChangeService', $EnableService);"
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "Label",
+                            "caption": " ",
+                            "width": "40px"
+                        },
+                        {
+                            "type": "CheckBox",
+                            "caption": "Track by mileage",
+                            "name": "ServiceByMileage",
+                            "onChange": "IPS_RequestAction($id,'OnChangeServiceByMileage',$ServiceByMileage);",
+                            "enabled": false
+                        }
+                    ]
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "Label",
+                            "caption": " ",
+                            "width": "40px"
+                        },
+                        {
+                            "type": "NumberSpinner",
+                            "caption": "Remind X km before due mileage",
+                            "name": "ServiceReminderKm",
+                            "suffix": "km",
+                            "minimum": 0,
+                            "width": "250px",
+                            "enabled": false
+                        }
+                    ]
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "Label",
+                            "caption": " ",
+                            "width": "40px"
+                        },
+                        {
+                            "type": "CheckBox",
+                            "caption": "Track by date",
+                            "name": "ServiceByDate",
+                            "onChange": "IPS_RequestAction($id,'OnChangeServiceByDate',$ServiceByDate);",
+                            "enabled": false
+                        }
+                    ]
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "Label",
+                            "caption": " ",
+                            "width": "40px"
+                        },
+                        {
+                            "type": "NumberSpinner",
+                            "caption": "Remind X days before due date",
+                            "name": "ServiceReminderDays",
+                            "suffix": "days",
+                            "minimum": 0,
+                            "width": "250px",
+                            "enabled": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "✨ Visualisation ...",
+            "items": [
+                {
+                    "type": "CheckBox",
+                    "name": "ShowBrandModel",
+                    "caption": "Show brand model label?"
+                },
+                {
+                    "type": "Label",
+                    "caption": "Colours used to indicate service status:"
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "SelectColor",
+                            "name": "ColorNormal",
+                            "caption": "Color (Normal):",
+                            "allowTransparent": false,
+                            "width": "160px"
+                        },
+                        {
+                            "type": "SelectColor",
+                            "name": "ColorWarning",
+                            "caption": "Color (Warning):",
+                            "allowTransparent": false,
+                            "width": "160px"
+                        },
+                        {
+                            "type": "SelectColor",
+                            "name": "ColorCritical",
+                            "caption": "Color (Critical):",
+                            "allowTransparent": false,
+                            "width": "160px"
                         }
                     ]
                 }

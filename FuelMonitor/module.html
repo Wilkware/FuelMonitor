@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+    <title>FuelMonitor</title>
+    <meta charset="utf-8" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: transparent;
+            border-radius: 10px;
+        }
+
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        .svm {
+            position: relative;
+            min-height: 150px;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .svm-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            padding: 5px;
+            object-fit: contain;
+            object-position: top;
+            display: none;
+        }
+
+        .svm-scrim {
+            position: absolute;
+            inset: 0;
+            background: var(--card-color);
+            opacity: 0.65;
+        }
+
+        .svm-content {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            box-sizing: border-box;
+            padding: var(--margin-top) var(--margin-side) var(--margin-bottom);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .svm-topline {
+            font-size: 14px;
+            opacity: 0.75;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .svm-topline .svm-brand {
+            font-weight: 300;
+        }
+
+        .svm-topline .svm-plate {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .svm-badges {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        .svm-badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+
+        .svm-stats {
+            display: flex;
+            gap: 8px;
+        }
+
+        .svm-stat {
+            flex: 1;
+            background: rgb(from var(--content-color) r g b / 15%);
+            border-radius: 8px;
+            padding: 8px 6px;
+            text-align: center;
+        }
+
+        .svm-stat .svm-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            display: block;
+            line-height: 1.15;
+        }
+
+        .svm-stat .svm-stat-label {
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .svm.svm-narrow .svm-stat .svm-stat-value {
+            font-size: 16px;
+        }
+
+        .svm-chart {
+            display: none;
+            flex: 1 1 auto;
+            min-height: 0;
+            flex-direction: column;
+        }
+
+        .svm.svm-tall .svm-chart {
+            display: flex;
+        }
+
+        .svm-chart-title {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-bottom: 2px;
+        }
+
+        .svm-chart-body {
+            position: relative;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
+        .svm-chart-svg {
+            position: absolute;
+            left: 0;
+            right: 0;
+            /* top/height are set from JS to match the table's vertical position - horizontally
+               this sits at the same level as #svm-bg (full tile width), ignoring .svm-content's
+               padding entirely, which is the whole point (edge-to-edge like the Aktienwidget). */
+            z-index: 0;
+        }
+
+        .svm-chart-empty {
+            font-size: 11px;
+            opacity: 0.5;
+            padding: 18px 0;
+            text-align: center;
+        }
+
+        .svm-chart-table {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            overflow: auto;
+        }
+
+        .svm-chart-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .svm-chart-table th {
+            text-align: left;
+            font-weight: 500;
+            opacity: 0.6;
+            padding-bottom: 3px;
+        }
+
+        .svm-chart-table td {
+            padding: 2px 0;
+            border-top: 1px solid rgb(from var(--content-color) r g b / 15%);;
+        }
+
+        .svm-form {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            align-items: end;
+        }
+
+        /* Always a clean divisor of the 6 fields (1x6/2x3/3x2/6x1) - never an uneven leftover row */
+        .svm.svm-cols-1 .svm-form {
+            grid-template-columns: repeat(1, 1fr);
+        }
+
+        .svm.svm-cols-2 .svm-form {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .svm.svm-cols-3 .svm-form {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .svm.svm-cols-6 .svm-form {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        /* 6 fields divide evenly into every column count above, 
+        so the save button (7th item) is ALWAYS alone on the final row 
+        regardless of column count - embrace that deliberately as a full-width
+        action bar instead of it looking randomly left-aligned. */
+        .svm-form .svm-field:last-child {
+            grid-column: 1 / -1;
+        }
+
+        .svm-form .svm-field:last-child label {
+            display: none;
+        }
+
+        .svm-field {
+            min-width: 0;
+        }
+
+        .svm-field label {
+            font-size: 10px;
+            opacity: 0.7;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .svm-field input,
+        .svm-field select {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            padding: 4px 6px;
+            border-radius: 6px;
+            border: 1px solid rgb(from var(--content-color) r g b / 15%);;
+            background: rgb(from var(--content-color) r g b / 5%);
+            color: var(--content-color);
+            font-size: 12px;
+        }
+
+        .svm-field input:focus,
+        .svm-field select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        /* The OPEN option list is OS/browser-rendered with a light background
+         regardless of our page theme - force dark text there so it stays 
+         readable even in a dark Symcon theme. */
+        .svm-field select option {
+            color: #1a1a1a;
+            background: #fff;
+        }
+
+        .svm-save {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px 6px;
+            border: none;
+            border-radius: 6px;
+            background: var(--accent-color);
+            color: var(--content-color);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .svm-msg {
+            font-size: 11px;
+            color: var(--accent-color);
+            min-height: 14px;
+        }
+
+        .svm-badge-edit {
+            border: none;
+            background: rgb(from var(--content-color) r g b / 10%);
+            color: inherit;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 11px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .svm-service-edit {
+            display: none;
+            background: rgb(from var(--content-color) r g b / 5%);
+            border-radius: 8px;
+            padding: 8px;
+            gap: 6px;
+            grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
+        }
+
+        .svm-service-edit.svm-open {
+            display: grid;
+        }
+
+        .svm-service-edit .svm-field[hidden] {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="svm" id="svm-root">
+        <img class="svm-bg" id="svm-bg" alt="">
+        <div class="svm-scrim"></div>
+        <div class="svm-chart-svg" id="svm-chart-svg"></div>
+        <div class="svm-content">
+
+            <div class="svm-topline">
+                <span class="svm-brand" id="svm-brand">–</span>
+                <span class="svm-plate" id="svm-plate">–</span>
+                <div class="svm-badges" id="svm-badges"></div>
+                <button class="svm-badge-edit" id="svm-badge-edit" title="Fälligkeiten bearbeiten">✎</button>
+            </div>
+
+            <div class="svm-service-edit" id="svm-service-edit">
+                <div class="svm-field" id="svm-field-tuev-date" hidden>
+                    <label for="svm-tuev-date">TÜV fällig am</label>
+                    <input type="date" id="svm-tuev-date">
+                </div>
+                <div class="svm-field" id="svm-field-service-date" hidden>
+                    <label for="svm-service-date">Service fällig am</label>
+                    <input type="date" id="svm-service-date">
+                </div>
+                <div class="svm-field" id="svm-field-service-km" hidden>
+                    <label for="svm-service-km">Service fällig bei</label>
+                    <input type="number" id="svm-service-km" step="1" min="0">
+                </div>
+                <div class="svm-field">
+                    <label>&nbsp;</label>
+                    <button class="svm-save" id="svm-service-save">Übernehmen</button>
+                </div>
+            </div>
+
+            <div class="svm-stats">
+                <div class="svm-stat">
+                    <span class="svm-stat-value" id="svm-stat-mileage">–</span>
+                    <span class="svm-stat-label">km</span>
+                </div>
+                <div class="svm-stat">
+                    <span class="svm-stat-value" id="svm-stat-average">–</span>
+                    <span class="svm-stat-label">l/100km</span>
+                </div>
+                <div class="svm-stat">
+                    <span class="svm-stat-value" id="svm-stat-costs">–</span>
+                    <span class="svm-stat-label">€/100km</span>
+                </div>
+            </div>
+
+            <div class="svm-form">
+                <div class="svm-field">
+                    <label for="svm-date">Datum</label>
+                    <input type="date" id="svm-date">
+                </div>
+                <div class="svm-field">
+                    <label for="svm-type">Betankung</label>
+                    <select id="svm-type">
+                        <option value="0">Erstbefüllung</option>
+                        <option value="1">Teilbetankung</option>
+                        <option value="2" selected>Volltankung</option>
+                    </select>
+                </div>
+                <div class="svm-field">
+                    <label for="svm-mileage">km-Stand</label>
+                    <input type="number" id="svm-mileage" step="1" min="0">
+                </div>
+                <div class="svm-field">
+                    <label for="svm-quantity">Menge (l)</label>
+                    <input type="number" id="svm-quantity" step="0.01" min="0">
+                </div>
+                <div class="svm-field">
+                    <label for="svm-price">€/l</label>
+                    <input type="number" id="svm-price" step="0.001" min="0">
+                </div>
+                <div class="svm-field">
+                    <label for="svm-invoice">Rechnung</label>
+                    <input type="number" id="svm-invoice" step="0.01" min="0">
+                </div>
+                <div class="svm-field">
+                    <label>&nbsp;</label>
+                    <button class="svm-save" id="svm-save">Speichern</button>
+                </div>
+            </div>
+
+            <div class="svm-chart">
+                <div class="svm-chart-title">Verbrauchsverlauf</div>
+                <div class="svm-chart-body" id="svm-chart-body">
+                    <div class="svm-chart-table" id="svm-chart-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Datum</th>
+                                    <th>km</th>
+                                    <th>Liter</th>
+                                    <th>€</th>
+                                </tr>
+                            </thead>
+                            <tbody id="svm-history-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="svm-msg" id="svm-msg"></div>
+
+        </div>
+    </div>
+
+    <script>
+        // ── INIT: set root/style variables ───────────────────────────────────
+        const p = new URLSearchParams(location.search);
+        const root = document.documentElement;
+        const m = {
+            margintop: ['--margin-top'],
+            marginside: ['--margin-side'],
+            marginbottom: ['--margin-bottom']
+        };
+        for (const k in m) {
+            const v = p.get(k);
+            if (!v) continue; m[k].forEach(c => root.style.setProperty(c, v));
+        }
+
+        // Default: today's date
+        document.getElementById('svm-date').value = new Date().toISOString().substring(0, 10);
+
+        // Grow/shrink with the actual tile size, instead of fixed breakpoints - the tile size is
+        // set by the TileVisu grid, we don't control it, so we measure it at runtime.
+        var svmRoot = document.getElementById('svm-root');
+        if (window.ResizeObserver) {
+            new ResizeObserver(function (entries) {
+                for (var i = 0; i < entries.length; i++) {
+                    var rect = entries[i].contentRect;
+                    svmRoot.classList.toggle('svm-tall', rect.height > 300);
+                    svmRoot.classList.toggle('svm-narrow', rect.width < 260);
+
+                    // 6 fields, always a clean divisor (1x6/2x3/3x2/6x1) - thresholds chosen so a select
+                    // showing "Erstbefüllung"/"Teilbetankung" never gets truncated.
+                    svmRoot.classList.remove('svm-cols-1', 'svm-cols-2', 'svm-cols-3', 'svm-cols-6');
+                    if (rect.width >= 680) {
+                        svmRoot.classList.add('svm-cols-6');
+                    } else if (rect.width >= 360) {
+                        svmRoot.classList.add('svm-cols-3');
+                    } else if (rect.width >= 240) {
+                        svmRoot.classList.add('svm-cols-2');
+                    } else {
+                        svmRoot.classList.add('svm-cols-1');
+                    }
+
+                    svmPositionChartSvg();
+                }
+            }).observe(svmRoot);
+        }
+
+        // Quantity/price/invoice triangle - resolved automatically, no configuration needed:
+        // whichever TWO fields were most recently edited (in either order, corrections included)
+        // determine the third. svmFieldOrder tracks recency, most recently touched field first.
+        var svmFieldOrder = ['invoice', 'price', 'quantity'];
+
+        function svmTouch(field) {
+            var idx = svmFieldOrder.indexOf(field);
+            if (idx > -1) {
+                svmFieldOrder.splice(idx, 1);
+            }
+            svmFieldOrder.unshift(field);
+        }
+
+        function svmLivePreview(field) {
+            svmTouch(field);
+            var target = svmFieldOrder[2]; // the one NOT among the two most recently touched
+
+            var tq = parseFloat(document.getElementById('svm-quantity').value) || 0;
+            var pl = parseFloat(document.getElementById('svm-price').value) || 0;
+            var iv = parseFloat(document.getElementById('svm-invoice').value) || 0;
+
+            if (target === 'quantity' && pl > 0) {
+                tq = Math.round((iv / pl) * 100) / 100;
+                document.getElementById('svm-quantity').value = tq;
+            } else if (target === 'price' && tq > 0) {
+                pl = Math.round((iv / tq) * 1000) / 1000;
+                document.getElementById('svm-price').value = pl;
+            } else if (target === 'invoice') {
+                iv = Math.round((tq * pl) * 100) / 100;
+                document.getElementById('svm-invoice').value = iv;
+            }
+        }
+
+        var svmFieldMap = { 'svm-quantity': 'quantity', 'svm-price': 'price', 'svm-invoice': 'invoice' };
+        Object.keys(svmFieldMap).forEach(function (elId) {
+            document.getElementById(elId).addEventListener('input', function () {
+                svmLivePreview(svmFieldMap[elId]);
+            });
+        });
+
+        document.getElementById('svm-save').addEventListener('click', function () {
+            var payload = {
+                date: document.getElementById('svm-date').value,
+                type: parseInt(document.getElementById('svm-type').value, 10),
+                mileage: parseInt(document.getElementById('svm-mileage').value || '0', 10),
+                quantity: parseFloat(document.getElementById('svm-quantity').value || '0'),
+                price: parseFloat(document.getElementById('svm-price').value || '0'),
+                invoice: parseFloat(document.getElementById('svm-invoice').value || '0')
+            };
+            document.getElementById('svm-msg').textContent = '';
+            requestAction('SaveTankEntry', JSON.stringify(payload));
+        });
+
+        // TÜV/Service due-date correction - the auto-suggested TÜV date is only a starting point,
+        // the user must be able to fix it (appointment missed, done later, etc.) at any time.
+        document.getElementById('svm-badge-edit').addEventListener('click', function () {
+            document.getElementById('svm-service-edit').classList.toggle('svm-open');
+        });
+
+        document.getElementById('svm-service-save').addEventListener('click', function () {
+            var tuevDate = document.getElementById('svm-tuev-date').value;
+            var serviceDate = document.getElementById('svm-service-date').value;
+            var serviceKm = document.getElementById('svm-service-km').value;
+
+            if (!document.getElementById('svm-field-tuev-date').hidden && tuevDate) {
+                requestAction('tuev_due_date', Math.floor(new Date(tuevDate).getTime() / 1000));
+            }
+            if (!document.getElementById('svm-field-service-date').hidden && serviceDate) {
+                requestAction('service_due_date', Math.floor(new Date(serviceDate).getTime() / 1000));
+            }
+            if (!document.getElementById('svm-field-service-km').hidden && serviceKm) {
+                requestAction('service_due_mileage', parseInt(serviceKm, 10));
+            }
+            document.getElementById('svm-service-edit').classList.remove('svm-open');
+        });
+
+        function svmToDateInput(ts) {
+            if (!ts) {
+                return '';
+            }
+            return new Date(ts * 1000).toISOString().substring(0, 10);
+        }
+
+        function svmRenderEditFields(edit) {
+            var editBtn = document.getElementById('svm-badge-edit');
+            if (!edit) {
+                editBtn.style.display = 'none';
+                return;
+            }
+            var anyActive = edit.enableTuev || edit.enableServiceDate || edit.enableServiceMileage;
+            editBtn.style.display = anyActive ? '' : 'none';
+            if (!anyActive) {
+                // Also collapse the panel itself if it happened to be open before config changed
+                document.getElementById('svm-service-edit').classList.remove('svm-open');
+            }
+
+            document.getElementById('svm-field-tuev-date').hidden = !edit.enableTuev;
+            document.getElementById('svm-field-service-date').hidden = !edit.enableServiceDate;
+            document.getElementById('svm-field-service-km').hidden = !edit.enableServiceMileage;
+
+            document.getElementById('svm-tuev-date').value = svmToDateInput(edit.tuevDate);
+            document.getElementById('svm-service-date').value = svmToDateInput(edit.serviceDate);
+            document.getElementById('svm-service-km').value = edit.serviceMileage || '';
+        }
+
+        // Small self-contained SVG line/area chart ("Kennlinie") - no external chart library,
+        // so the tile keeps working without an internet connection.
+        function svmFormatDate(ts) {
+            var d = new Date(ts * 1000);
+            var dd = String(d.getDate()).padStart(2, '0');
+            var mm = String(d.getMonth() + 1).padStart(2, '0');
+            return dd + '.' + mm + '.' + d.getFullYear();
+        }
+
+        function svmRenderHistoryTable(history) {
+            var body = document.getElementById('svm-history-body');
+            body.innerHTML = '';
+            (history || []).slice(0, 6).forEach(function (entry) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + svmFormatDate(entry.timestamp) + '</td>' +
+                    '<td>' + entry.mileage + '</td>' +
+                    '<td>' + (entry.liters ? entry.liters.toFixed(2) : '-') + '</td>' +
+                    '<td>' + (entry.costs ? entry.costs.toFixed(2) : (entry.price ? entry.price.toFixed(2) : '-')) + '</td>';
+                body.appendChild(tr);
+            });
+        }
+
+        // Converts a set of points into a smooth SVG path using Catmull-Rom -> cubic Bezier
+        // interpolation (standard tension factor 6), instead of straight polyline segments.
+        function svmSmoothPath(points) {
+            if (points.length < 3) {
+                return 'M' + points.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' L');
+            }
+            var d = 'M' + points[0][0].toFixed(1) + ',' + points[0][1].toFixed(1);
+            for (var i = 0; i < points.length - 1; i++) {
+                var p0 = points[i - 1] || points[i];
+                var p1 = points[i];
+                var p2 = points[i + 1];
+                var p3 = points[i + 2] || p2;
+                var cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+                var cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+                var cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+                var cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+                d += ' C' + cp1x.toFixed(1) + ',' + cp1y.toFixed(1) + ' ' +
+                    cp2x.toFixed(1) + ',' + cp2y.toFixed(1) + ' ' +
+                    p2[0].toFixed(1) + ',' + p2[1].toFixed(1);
+            }
+            return d;
+        }
+
+        function svmPositionChartSvg() {
+            var chartSvg = document.getElementById('svm-chart-svg');
+            var tableEl = document.getElementById('svm-chart-table');
+            var rootRect = svmRoot.getBoundingClientRect();
+            var tableRect = tableEl.getBoundingClientRect();
+            chartSvg.style.top = (tableRect.top - rootRect.top) + 'px';
+            chartSvg.style.height = tableRect.height + 'px';
+        }
+
+        function svmRenderChart(history) {
+            var chartSvg = document.getElementById('svm-chart-svg');
+            // Table (last entries) is always shown - it's the precise, data-driven view.
+            // The trend line renders BEHIND it as a soft visual backdrop, when there's enough
+            // data for it (2+ Volltankungen) - both together: data-driven AND good-looking.
+            // It lives on the SAME layer as #svm-bg (full tile width, ignoring .svm-content's
+            // padding) - only its vertical position/height is synced to match the table below.
+            svmRenderHistoryTable(history);
+            svmPositionChartSvg();
+
+            var filtered = (history || []).filter(function (e) { return e.average > 0; });
+            if (filtered.length < 2) {
+                chartSvg.innerHTML = '';
+                return;
+            }
+            var data = filtered.slice().reverse().map(function (e) { return e.average; });
+            var w = 300, h = 44, padY = 5;
+            var max = Math.max.apply(null, data);
+            var min = Math.min.apply(null, data);
+            var range = (max - min) || 1;
+            var stepX = w / (data.length - 1);
+
+            var points = data.map(function (v, i) {
+                var x = i * stepX;
+                var y = padY + (h - padY * 2) * (1 - (v - min) / range);
+                return [x, y];
+            });
+
+            var linePath = svmSmoothPath(points);
+            var areaPath = linePath +
+                ' L' + points[points.length - 1][0].toFixed(1) + ',' + h +
+                ' L' + points[0][0].toFixed(1) + ',' + h + ' Z';
+
+            // Toned down opacity compared to before - it's a backdrop behind readable table
+            // text now, not the sole focal element, so it must not fight for attention/contrast.
+            chartSvg.innerHTML =
+                '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" style="width:100%; height:100%;">' +
+                '<defs><linearGradient id="svmChartGrad" x1="0" y1="0" x2="0" y2="1">' +
+                '<stop offset="0%" style="stop-color:var(--accent-color, #3b82f6); stop-opacity:0.28;"></stop>' +
+                '<stop offset="100%" style="stop-color:var(--accent-color, #3b82f6); stop-opacity:0;"></stop>' +
+                '</linearGradient></defs>' +
+                '<path d="' + areaPath + '" fill="url(#svmChartGrad)"></path>' +
+                '<path d="' + linePath + '" fill="none" stroke="var(--accent-color, #3b82f6)" stroke-width="2" ' +
+                'stroke-opacity="0.55" stroke-linejoin="round" stroke-linecap="round" ' +
+                'vector-effect="non-scaling-stroke"></path>' +
+                '</svg>';
+        }
+
+        // Receives messages sent from the module: once on tile load (via GetVisualizationTile()) and
+        // again after every save or configuration change (via UpdateVisualizationValue()).
+        function svmColorHex(intColor) {
+            // Symcon SelectColor properties are plain integers (0xRRGGBB)
+            return '#' + (intColor || 0).toString(16).padStart(6, '0');
+        }
+
+        function svmRenderBadges(badges) {
+            var container = document.getElementById('svm-badges');
+            container.innerHTML = '';
+            if (!badges) {
+                return;
+            }
+            var colors = badges.colors || {};
+            ['tuev', 'service'].forEach(function (key) {
+                var b = badges[key];
+                if (!b) {
+                    return;
+                }
+                var color = svmColorHex(colors[b.status]);
+                var span = document.createElement('span');
+                span.className = 'svm-badge';
+                span.style.background = color + '2a'; // ~16% opacity fill
+                span.style.color = color;
+                span.textContent = b.label + ' · ' + b.text;
+                container.appendChild(span);
+            });
+        }
+
+        // ── SDK: handleMessage (data transfer) ───────────────────────────────
+        function handleMessage(data) {
+            console.log("TEST");
+            var msg;
+            try {
+                msg = JSON.parse(data);
+            } catch (e) {
+                console.log('TEST');
+                console.error('handleMessage: invalid JSON payload', data, e);
+                return;
+            }
+
+            if (msg.vehicleImage) {
+                var bg = document.getElementById('svm-bg');
+                bg.src = msg.vehicleImage;
+                bg.style.display = 'block';
+            }
+            if (typeof msg.showBrandModel !== 'undefined') {
+                document.getElementById('svm-brand').style.display = msg.showBrandModel ? '' : 'none';
+            }
+            if (msg.brandModel) {
+                document.getElementById('svm-brand').textContent = msg.brandModel;
+            }
+            if (msg.licensePlate) {
+                document.getElementById('svm-plate').textContent = msg.licensePlate;
+            }
+            console.log(msg.badges);
+            svmRenderBadges(msg.badges);
+            svmRenderEditFields(msg.badges ? msg.badges.edit : null);
+            svmRenderChart(msg.history);
+
+            if (msg.history && msg.history.length > 0) {
+                var last = msg.history[0];
+                document.getElementById('svm-stat-mileage').textContent = last.mileage;
+                document.getElementById('svm-stat-average').textContent = last.average ? last.average.toFixed(2) : '–';
+                document.getElementById('svm-stat-costs').textContent = last.costs ? last.costs.toFixed(2) : '–';
+            }
+        }
+    </script>
+</body>
+
+</html>
