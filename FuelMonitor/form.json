@@ -112,7 +112,7 @@
                     "type": "CheckBox",
                     "caption": "Enable service reminder",
                     "name": "EnableService",
-                    "onChange": "IPS_RequestAction($id,'OnChangeService', $EnableService);"
+                    "onChange": "IPS_RequestAction($id,'OnChangeService', json_encode([$EnableService, $ServiceByMileage, $ServiceByDate]));"
                 },
                 {
                     "type": "RowLayout",
@@ -268,6 +268,71 @@
         },
         {
             "type": "ExpansionPanel",
+            "name": "ArchivePanel",
+            "caption": "🗄️ Archiving ...",
+            "expanded": false,
+            "items": [
+                {
+                    "type": "Label",
+                    "name": "ArchiveStatus",
+                    "caption": ""
+                },
+                {
+                    "type": "Button",
+                    "name": "ArchiveButton",
+                    "caption": "Enable archiving",
+                    "onClick": "IPS_RequestAction($id, 'EnableArchive', '');"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "🔄 Import & export ...",
+            "items": [
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "SelectFile",
+                            "name": "ImportFile",
+                            "caption": "File:",
+                            "extensions": ".csv",
+                            "width": "300px"
+                        },
+                        {
+                            "type": "Button",
+                            "name": "ImportButton",
+                            "caption": "Import",
+                            "confirm": "All existing refuelling data will be replaced by the content of the file!",
+                            "onClick": "IPS_RequestAction($id, 'OnImport', $ImportFile);"
+                        },
+                        {
+                            "type": "Button",
+                            "name": "ExportButton",
+                            "caption": "Export",
+                            "link": true,
+                            "onClick": "echo \"../hook/fuelmonitor$id?export=csv\";"
+                        }
+                    ]
+                },
+                {
+                    "type": "Label",
+                    "name": "ImportExportHint",
+                    "caption": "Import and export are only available with active archiving!",
+                    "visible": false
+                },
+                {
+                    "type": "Label",
+                    "caption": "ATTENTION: The import replaces all existing refuelling data!"
+                },
+                {
+                    "type": "Label",
+                    "caption": "NOTE: No file needs to be selected for export!"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
             "caption": "🎗️ Source code, donation and licence ...",
             "items": [
                 {
@@ -297,6 +362,7 @@
                 },
                 {
                     "type": "Label",
+                    "name": "Version",
                     "color": 8421504
                 }
             ]
@@ -317,6 +383,11 @@
             "code": 104,
             "icon": "inactive",
             "caption": "Instance inactive."
+        },
+        {
+            "code": 202,
+            "icon": "inactive",
+            "caption": "Instance inactive, archiving is not (correctly) set up!"
         }
     ]
 }

@@ -332,25 +332,25 @@
                 <span class="svm-brand" id="svm-brand">–</span>
                 <span class="svm-plate" id="svm-plate">–</span>
                 <div class="svm-badges" id="svm-badges"></div>
-                <button class="svm-badge-edit" id="svm-badge-edit" title="Fälligkeiten bearbeiten">✎</button>
+                <button class="svm-badge-edit" id="svm-badge-edit">✎</button>
             </div>
 
             <div class="svm-service-edit" id="svm-service-edit">
                 <div class="svm-field" id="svm-field-tuev-date" hidden>
-                    <label for="svm-tuev-date">TÜV fällig am</label>
+                    <label for="svm-tuev-date">TÜV due on</label>
                     <input type="date" id="svm-tuev-date">
                 </div>
                 <div class="svm-field" id="svm-field-service-date" hidden>
-                    <label for="svm-service-date">Service fällig am</label>
+                    <label for="svm-service-date">Service due on</label>
                     <input type="date" id="svm-service-date">
                 </div>
                 <div class="svm-field" id="svm-field-service-km" hidden>
-                    <label for="svm-service-km">Service fällig bei</label>
+                    <label for="svm-service-km">Service due at</label>
                     <input type="number" id="svm-service-km" step="1" min="0">
                 </div>
                 <div class="svm-field">
                     <label>&nbsp;</label>
-                    <button class="svm-save" id="svm-service-save">Übernehmen</button>
+                    <button class="svm-save" id="svm-service-save">Apply</button>
                 </div>
             </div>
 
@@ -371,23 +371,23 @@
 
             <div class="svm-form">
                 <div class="svm-field">
-                    <label for="svm-date">Datum</label>
+                    <label for="svm-date">Date</label>
                     <input type="date" id="svm-date">
                 </div>
                 <div class="svm-field">
-                    <label for="svm-type">Betankung</label>
+                    <label for="svm-type">Refuelling</label>
                     <select id="svm-type">
-                        <option value="0">Erstbefüllung</option>
-                        <option value="1">Teilbetankung</option>
-                        <option value="2" selected>Volltankung</option>
+                        <option value="0">Initial filling</option>
+                        <option value="1">Partial refuelling</option>
+                        <option value="2" selected>Full refuelling</option>
                     </select>
                 </div>
                 <div class="svm-field">
-                    <label for="svm-mileage">km-Stand</label>
+                    <label for="svm-mileage">Odometer</label>
                     <input type="number" id="svm-mileage" step="1" min="0">
                 </div>
                 <div class="svm-field">
-                    <label for="svm-quantity">Menge (l)</label>
+                    <label for="svm-quantity">Quantity (l)</label>
                     <input type="number" id="svm-quantity" step="0.01" min="0">
                 </div>
                 <div class="svm-field">
@@ -395,25 +395,25 @@
                     <input type="number" id="svm-price" step="0.001" min="0">
                 </div>
                 <div class="svm-field">
-                    <label for="svm-invoice">Rechnung</label>
+                    <label for="svm-invoice">Invoice</label>
                     <input type="number" id="svm-invoice" step="0.01" min="0">
                 </div>
                 <div class="svm-field">
                     <label>&nbsp;</label>
-                    <button class="svm-save" id="svm-save">Speichern</button>
+                    <button class="svm-save" id="svm-save">Save</button>
                 </div>
             </div>
 
             <div class="svm-chart">
-                <div class="svm-chart-title">Verbrauchsverlauf</div>
+                <div class="svm-chart-title">Consumption history</div>
                 <div class="svm-chart-body" id="svm-chart-body">
                     <div class="svm-chart-table" id="svm-chart-table">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Datum</th>
+                                    <th>Date</th>
                                     <th>km</th>
-                                    <th>Liter</th>
+                                    <th>Liters</th>
                                     <th>€</th>
                                 </tr>
                             </thead>
@@ -442,8 +442,11 @@
             if (!v) continue; m[k].forEach(c => root.style.setProperty(c, v));
         }
 
+        // Attributes are not covered by the automatic translateHTML() on load
+        document.getElementById('svm-badge-edit').title = translate('Edit due dates');
+
         // Default: today's date
-        document.getElementById('svm-date').value = new Date().toISOString().substring(0, 10);
+        document.getElementById('svm-date').value = svmToDateInput(Math.floor(Date.now() / 1000));
 
         // Grow/shrink with the actual tile size, instead of fixed breakpoints - the tile size is
         // set by the TileVisu grid, we don't control it, so we measure it at runtime.
@@ -538,10 +541,10 @@
             var serviceKm = document.getElementById('svm-service-km').value;
 
             if (!document.getElementById('svm-field-tuev-date').hidden && tuevDate) {
-                requestAction('tuev_due_date', Math.floor(new Date(tuevDate).getTime() / 1000));
+                requestAction('tuev_due_date', svmFromDateInput(tuevDate));
             }
             if (!document.getElementById('svm-field-service-date').hidden && serviceDate) {
-                requestAction('service_due_date', Math.floor(new Date(serviceDate).getTime() / 1000));
+                requestAction('service_due_date', svmFromDateInput(serviceDate));
             }
             if (!document.getElementById('svm-field-service-km').hidden && serviceKm) {
                 requestAction('service_due_mileage', parseInt(serviceKm, 10));
@@ -553,7 +556,17 @@
             if (!ts) {
                 return '';
             }
-            return new Date(ts * 1000).toISOString().substring(0, 10);
+            // Local date parts - toISOString() would return the UTC date (previous day before 02:00)
+            var d = new Date(ts * 1000);
+            var mm = String(d.getMonth() + 1).padStart(2, '0');
+            var dd = String(d.getDate()).padStart(2, '0');
+            return d.getFullYear() + '-' + mm + '-' + dd;
+        }
+
+        function svmFromDateInput(value) {
+            // Local midnight, matching the timestamps created on the PHP side
+            var p = value.split('-');
+            return Math.floor(new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10)).getTime() / 1000);
         }
 
         function svmRenderEditFields(edit) {
@@ -712,12 +725,10 @@
 
         // ── SDK: handleMessage (data transfer) ───────────────────────────────
         function handleMessage(data) {
-            console.log("TEST");
             var msg;
             try {
                 msg = JSON.parse(data);
             } catch (e) {
-                console.log('TEST');
                 console.error('handleMessage: invalid JSON payload', data, e);
                 return;
             }
@@ -736,7 +747,6 @@
             if (msg.licensePlate) {
                 document.getElementById('svm-plate').textContent = msg.licensePlate;
             }
-            console.log(msg.badges);
             svmRenderBadges(msg.badges);
             svmRenderEditFields(msg.badges ? msg.badges.edit : null);
             svmRenderChart(msg.history);

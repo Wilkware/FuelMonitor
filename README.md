@@ -1,46 +1,60 @@
 # ⛽ Spritmonitor (Fuel Monitor)
 
+[![Home](https://img.shields.io/badge/Home-wilkware.de-0b1830.svg?style=flat-square)](https://wilkware.de/module/spritmonitor/)
 [![Version](https://img.shields.io/badge/Symcon-PHP--Modul-red.svg?style=flat-square)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
 [![Product](https://img.shields.io/badge/Symcon%20Version-8.1-blue.svg?style=flat-square)](https://www.symcon.de/produkt/)
-[![Version](https://img.shields.io/badge/Modul%20Version-2.0.20260730-orange.svg?style=flat-square)](https://github.com/Wilkware/FuelMonitor)
+[![Version](https://img.shields.io/badge/Modul%20Version-3.0.20261007-orange.svg?style=flat-square)](https://github.com/Wilkware/FuelMonitor)
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg?style=flat-square)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Actions](https://img.shields.io/github/actions/workflow/status/wilkware/FuelMonitor/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/Wilkware/FuelMonitor/actions)
 
-Der Spritmonitor berechnet den Spritverbrauch und Kosten von einem Fahrzeugs und hilft bei der Serviceverwaltung.
+Der Spritmonitor berechnet den Spritverbrauch und die Kosten eines Fahrzeugs und hilft bei der Verwaltung von Service- und TÜV-Terminen.
 
-## Inhaltverzeichnis
+## Inhaltsverzeichnis
 
 1. [Funktionsumfang](#user-content-1-funktionsumfang)
 2. [Voraussetzungen](#user-content-2-voraussetzungen)
 3. [Installation](#user-content-3-installation)
-4. [Einrichten der Instanzen in IP-Symcon](#user-content-4-einrichten-der-instanzen-in-ip-symcon)
-5. [Statusvariablen und Darstellungen](#user-content-5-statusvariablen-und-darstellungen)
-6. [Visualisierung](#user-content-6-visualisierung)
-7. [PHP-Befehlsreferenz](#user-content-7-php-befehlsreferenz)
-8. [Versionshistorie](#user-content-8-versionshistorie)
+4. [Einrichtung](#user-content-4-einrichtung)
+5. [Statusvariablen](#user-content-5-statusvariablen)
+6. [Darstellungen](#user-content-6-darstellungen)
+7. [Visualisierung](#user-content-7-visualisierung)
+8. [Befehlsreferenz](#user-content-8-befehlsreferenz)
+9. [Versionshistorie](#user-content-9-versionshistorie)
 
 ### 1. Funktionsumfang
 
-Der Spritmonitor ist eigentlich schon etwas mehr als ein reiner Verbrauchsmonitor:
+Der Spritmonitor ist etwas mehr als ein reiner Verbrauchsmonitor:
 
-- berechnet den Durchschnitsverbrauch und die dazugehörenden Kosten
-- verwaltet die algemeinen Fahrzeugdaten
-- verwaltet und informiert bei fälligen Service und TÜV-Terminen
-- stellt alles zentral über TileVisu zur Verfügung
+* Berechnung von Durchschnittsverbrauch (l/100 km) und Kosten (€/100 km) nach der **Volltankmethode**
+* Unterstützung von Erstbefüllung, Teil- und Volltankungen – Teilbetankungen werden bis zur nächsten Volltankung aufsummiert
+* Nachträgliche Erfassung von Tankvorgängen (Heute, Gestern, Vorgestern bzw. frei wählbares Datum)
+* Automatische Plausibilitätsprüfung von Menge, Literpreis und Rechnungsbetrag
+* Verwaltung der allgemeinen Fahrzeugdaten (Marke/Modell, Kennzeichen, Erstzulassung, Fahrzeugbild)
+* Überwachung von TÜV- und Service-Fälligkeiten (nach Datum und/oder Kilometerstand) mit farbiger Statusanzeige
+* Eigene Kachel für die TileVisu (HTML-SDK) mit Eingabemaske, Verbrauchsverlauf und Fälligkeitsanzeige
+* Speicherung aller Tankdaten im Archiv für eigene Auswertungen und Statistiken
+* Import & Export der Tankdaten als CSV-Datei zur Datensicherung
 
 ### 2. Voraussetzungen
 
-* IP-Symcon ab Version 8.1
+* Symcon ab Version 8.1
+* Archive Control (Standard-Instanz in Symcon) – die Tankdaten werden ausschließlich im Archiv gespeichert
+* TileVisu für die Darstellung als Kachel
 
 ### 3. Installation
 
-* Über den Modul Store das Modul _Sprintmonitor_ installieren.
-* Alternativ Über das Modul-Control folgende URL hinzufügen.  
-`https://github.com/Wilkware/FuelMonitor` oder `git://github.com/Wilkware/FuelMonitor.git`
+* Über den Module Store das Modul _Spritmonitor_ installieren.
+* Alternativ über das Module Control folgende URL hinzufügen:
+`https://github.com/Wilkware/FuelMonitor`
 
-### 4. Einrichten der Instanzen in IP-Symcon
+### 4. Einrichtung
 
-* Unter 'Instanz hinzufügen' ist das _Sprintmonitor_-Modul (Alias: _Benzinverbrauchsrechner_, _Benzinkostenrechner_) unter dem Hersteller '(Geräte)' aufgeführt.
+* Unter 'Instanz hinzufügen' ist das _Spritmonitor_-Modul (Alias: _Benzinkostenrechner_, _Benzinverbrauchsrechner_) unter dem Hersteller '(Geräte)' aufgeführt.
+* Pro Fahrzeug wird eine eigene Instanz angelegt.
+* Ohne Archivierung kann das Modul keine Tankvorgänge speichern. Die Instanz bleibt deshalb __inaktiv__ (Status: _Archivierung ist nicht (korrekt) eingerichtet_), bis die Archivierung aktiviert ist.
+* Dazu im Aktionsbereich der Konfiguration im Bereich _🗄️ Archivierung_ auf __Archivierung aktivieren__ klicken. Der Bereich ist automatisch aufgeklappt, solange die Archivierung fehlt. Eingerichtet wird die Archivierung der Statusvariablen _Kilometer_ (Aggregation: Zähler), _Liter_, _Preis_, _Durchschnittsverbrauch_ und _Kosten_ (Aggregation: Standard); danach ist die Instanz aktiv.
+* Bei bestehenden Instanzen aus älteren Versionen ist die Instanz nach dem Update ggf. ebenfalls inaktiv, bis die Aggregation über den Button angepasst wurde. Die vorhandenen Archivdaten bleiben dabei erhalten.
+* Ist ein Anfangs-Kilometerstand eingetragen, wird nach dem Aktivieren der Archivierung automatisch die Erstbefüllung angelegt.
 
 __Konfigurationsseite__:
 
@@ -50,80 +64,176 @@ Einstellungsbereich:
 
 Name                                             | Beschreibung
 ------------------------------------------------ | ---------------------------------
-Marke / Modell                                   | Dient nur zur besseren Fahrzeugverwaltung
-Kennzeichen                                      | Nummernschild
-Erstzulassung                                    | Datum der Erstzulassung (berechnet automatisch ersten TÜV-Termin)
-Kilometerstand                                   | Dient zur einfachen Erstinitialisierung
-Fahrzeugbild                                     | wenn vorhanden, dient als Hintergrundbild in der Visu
+Marke / Modell                                   | Bezeichnung des Fahrzeugs, wird optional in der Kachel angezeigt
+Kennzeichen                                      | Nummernschild im Format `XX-YY 1234` (optional mit `E` oder `H`)
+Erstzulassung                                    | Datum der Erstzulassung; daraus wird einmalig der erste TÜV-Termin (+3 Jahre) vorgeschlagen
+Kilometerstand                                   | Anfangs-Kilometerstand (z. B. beim Gebrauchtkauf); wird bei leerem Archiv automatisch als Erstbefüllung eingetragen
+Fahrzeugbild                                     | Medienobjekt (PNG, JPG, GIF, WEBP), das als Hintergrundbild der Kachel dient
 
 > 🛠️ Service & TÜV ...
 
 Name                                             | Beschreibung
 ------------------------------------------------ | ---------------------------------
-TÜV-Überwachung aktivieren                       | Aktiviert Meldung bei TÜV-Fälligkeit
-Erinnere X Tage vor Fälligkeit                   | Einstellung wieviel Tage vorher erinnert werden soll (Termin machen)
-Serviceerinnerung aktivieren                     | Aktiviert Meldung für Service-Fälligkeit
-Nach Kilometerleistung verfolgen                 | Entscheidung, ob nach gefahrenen Kilometern informiert werden soll
-Erinnere X km vor Fälligkeit                     | Wird durch Tankkilometer gegengerechnet
-Nach Datum verfolgen                             | Entscheidung, ob nach festem Intervall (Datum) informiert werden soll
-Erinnere X Tage vor Fälligkeit                   | Einstellung wieviel Tage vor Service erinnert werden soll (Termin machen)
+TÜV-Überwachung aktivieren                       | Legt die Variable _TÜV-Fälligkeitstermin_ an und zeigt den TÜV-Status in der Kachel
+Erinnere X Tage vor Fälligkeit                   | Ab wie vielen Tagen vor dem Termin der Status auf _Warnung_ wechselt
+Serviceerinnerung aktivieren                     | Aktiviert die Service-Überwachung
+Nach Kilometerleistung verfolgen                 | Legt die Variable _Wartungsintervall_ (fälliger Kilometerstand) an
+Erinnere X km vor Fälligkeit                     | Ab wie vielen Restkilometern der Status auf _Warnung_ wechselt; gerechnet wird mit dem zuletzt erfassten Kilometerstand
+Nach Datum verfolgen                             | Legt die Variable _Wartungsdatum_ an
+Erinnere X Tage vor Fälligkeit                   | Ab wie vielen Tagen vor dem Servicetermin der Status auf _Warnung_ wechselt
+
+Sind Service nach Datum und nach Kilometer aktiv, zeigt die Kachel jeweils die dringendere Fälligkeit an.
+Die Fälligkeiten selbst werden über die Statusvariablen oder direkt in der Kachel (Stift-Symbol ✎) gepflegt.
 
 > ✨ Visualisierung ...
 
 Name                                             | Beschreibung
 ------------------------------------------------ | ---------------------------------
-Marken- und Modellbezeichnung anzeigen?          | Wird vor Nummernschild angezeigt und kann aber auch weggelassen werden (meistens heißt die Darstellung schon so)
-Farbe (Normal)                                   | Darstellungsfarbe in Visu für Zustand "Alles easy"
-Farbe (Warnung)                                  | Darstellungsfarbe in Visu für Zustand "Wird eng"
-Farbe (Kritisch)                                 | Darstellungsfarbe in Visu für Zustand "Jetzt aber schnell"
+Marken- und Modellbezeichnung anzeigen?          | Zeigt Marke/Modell vor dem Kennzeichen an (kann entfallen, wenn die Kachel schon so heißt)
+Farbe (Normal)                                   | Statusfarbe, wenn die Fälligkeit noch nicht im Erinnerungszeitraum liegt
+Farbe (Warnung)                                  | Statusfarbe innerhalb des Erinnerungszeitraums
+Farbe (Kritisch)                                 | Statusfarbe, wenn der Termin bzw. Kilometerstand erreicht oder überschritten ist
 
 > ⚙️ Erweiterte Einstellungen ...
 
-Name                                       | Beschreibung
------------------------------------------- | -----------------------------------
-Zeige Fehlermeldung wenn Datum in der Zukunft liegt! | Nur Rückwirkend wenn kein Zwischendatum ist!
-Zeige Fehlermeldung wenn Kilometerstand abnimmt! | Bitte keine Manipulationen :)
+Name                                                         | Beschreibung
+------------------------------------------------------------ | -----------------------------------
+Zeige Fehlermeldung wenn Datum in der Zukunft liegt!         | Einträge mit einem Datum in der Zukunft werden immer verworfen; die Option steuert nur, ob eine Meldung erscheint
+Zeige Fehlermeldung wenn Kilometerstand abnimmt!             | Einträge mit kleinerem oder gleichem Kilometerstand werden immer verworfen; die Option steuert nur, ob eine Meldung erscheint
+Erlaube Erstbefüllung nur beim ersten Speichern ...          | Aktiv (Standard): eine Erstbefüllung ist nur bei leerem Archiv möglich. Inaktiv: eine erneute Erstbefüllung **löscht alle bisherigen Archivdaten** der Instanz und startet neu
 
-### 5. Statusvariablen und Darstellungen
+__Aktionsbereich__:
 
-Die Statusvariablen werden automatisch angelegt. Das Löschen einzelner zerstört die komplette Funktionalität!!!
+> 🗄️ Archivierung ...
 
-#### Statusvariablen
+Zeigt an, ob die Archivierung korrekt eingerichtet ist, und bietet den Button __Archivierung aktivieren__ (siehe oben).
 
-Name                            | Typ       | Beschreibung
---------------------------------| --------- | ----------------
-Kilometer                       | Integer   | gefahrene Kilometer (ob aktuell, abhängig vom Tankdatum)
-Liter                           | Float     | getankten Liter (ob aktuell, abhängig vom Tankdatum)
-Preis                           | Float     | getankten Liter (ob aktuell, abhängig vom Tankdatum)
-Durchschnittsverbrauch          | Flaot     | verbrauchte Liter je gefahrene 100 Kilometer
-Kosten                          | Flaot     | Kosten je 100 Kilometer
-TÜV-Fälligkeitstermin           | Integer   | nächser TÜV-Termin (wenn aktiviert)
-Wartungsdatum                   | Integer   | nächster Servicetermin (wenn aktiviert)
-Wartungsintervall               | Integer   | nächster Serviceintervall bei Kilometer X (wenn aktiviert)
+> 🔄 Import & Export ...
 
-HINWEIS: da man auch nachträglich (also nicht unbedingt am gleichen Tag) die Daten eingeben kann,  
-werden diese dann direkt ins Archive geschrieben und nicht mit __SetValue__. Dadurch müssen sie nicht immer den  
-aktuellsten Stand abbilden.
+Import und Export sind nur bei aktiver Archivierung verfügbar, sonst sind die Bedienelemente ausgegraut.
 
-#### Darstellungen
+Name           | Beschreibung
+-------------- | ---------------------------------
+Datei          | CSV-Datei für den Import
+Importieren    | Ersetzt __alle__ vorhandenen Tankdaten im Archiv durch den Inhalt der Datei (mit Sicherheitsabfrage)
+Exportieren    | Lädt alle Tankdaten als CSV-Datei herunter (`fuelmonitor_<Kennzeichen>_<Datum>.csv`), dafür muss keine Datei ausgewählt werden
 
-Die Dartsellungen werden den Variablen über direkte Assoziazion zugewiesen.  
-Es werden keine Darstellungs-Templates angelegt.
+Aufbau der CSV-Datei (Trennzeichen `;`, Kopfzeile in der ersten Zeile):
 
-### 6. Visualisierung
+Spalte   | Inhalt
+-------- | ---------------------------------
+Date     | Zeitpunkt der Betankung, z. B. `2026-02-02 08:30:00`
+Type     | `0` = Erstbefüllung, `1` = Teilbetankung, `2` = Volltankung
+Mileage  | Kilometerstand
+Liters   | getankte Liter
+Price    | Preis je Liter
+Average  | Verbrauch in l/100 km
+Costs    | Kosten in €/100 km
 
-Man kann sowohl das gesamte Modul (HTML-SDK Support) als auch nur die Statusvariablen direkt in der Visualisierung verlinken.
-Bitte dann aber den obigen HINWEIS beachten!!!
+_Hinweise:_
 
-### 7. PHP-Befehlsreferenz
+* Die Art der Betankung wird nicht archiviert. Beim Export wird sie aus den Daten abgeleitet (erster Eintrag = Erstbefüllung, Verbrauch > 0 = Volltankung, sonst Teilbetankung).
+* Verbrauch und Kosten werden beim Import unverändert übernommen, nicht neu berechnet. Der Bezugspunkt für die nächste Volltankung wird aus den importierten Daten wiederhergestellt.
+* Die Datei kann z. B. mit Excel bearbeitet werden. Beim Import werden auch `,` als Trennzeichen sowie Dezimalkomma und deutsches Datumsformat (`02.02.2026 08:30`) erkannt.
+* Die TÜV- und Service-Fälligkeiten sind nicht Teil der Datei.
 
-Ein direkter Aufruf von öffentlichen Funktionen ist nicht notwendig!
+### 5. Statusvariablen
 
-### 8. Versionshistorie
+Die Statusvariablen werden automatisch angelegt. Das Löschen einzelner kann zu Fehlfunktionen führen.
 
-v2.0 20260730
+Ident                 | Name                   | Typ     | Beschreibung
+--------------------- | ---------------------- | ------- | ------------------------------
+kilometers            | Kilometer              | Integer | Kilometerstand der Betankung
+liters                | Liter                  | Float   | getankte Liter
+price                 | Preis                  | Float   | Preis je Liter
+average               | Durchschnittsverbrauch | Float   | verbrauchte Liter je 100 km (nur bei Volltankung, sonst 0)
+costs                 | Kosten                 | Float   | Kosten je 100 km (nur bei Volltankung, sonst 0)
+tuev_due_date         | TÜV-Fälligkeitstermin  | Integer | nächster TÜV-Termin (wenn aktiviert)
+service_due_date      | Wartungsdatum          | Integer | nächster Servicetermin (wenn aktiviert)
+service_due_mileage   | Wartungsintervall      | Integer | Kilometerstand, bei dem der nächste Service fällig ist (wenn aktiviert)
 
-* _NEU_: komplette Erweiterung durch neue Möglichkeiten in der TileVisu
+_Hinweis:_ Tankvorgänge vom aktuellen Tag werden ganz normal gesetzt und dabei archiviert.
+Nachträglich erfasste Tankvorgänge (z. B. von gestern) werden mit ihrem Datum direkt ins Archiv geschrieben und **nicht** in die Variable übernommen.
+Die Statusvariablen _Kilometer_ bis _Kosten_ zeigen daher nicht zwingend den zuletzt erfassten Tankvorgang – maßgeblich ist immer das Archiv.
+
+__Berechnung (Volltankmethode)__:
+
+Betankung      | Wirkung
+-------------- | ------------------------------
+Erstbefüllung  | Setzt den Bezugspunkt (Kilometerstand), es wird noch kein Verbrauch berechnet
+Teilbetankung  | Speichert die Werte, die getankten Liter werden bis zur nächsten Volltankung aufsummiert
+Volltankung    | Verbrauch = (Liter seit letzter Volltankung inkl. Teilbetankungen × 100) / gefahrene km; Kosten = Verbrauch × Literpreis
+
+### 6. Darstellungen
+
+Die Darstellungen werden direkt an den Statusvariablen hinterlegt, es werden keine Profile angelegt.
+
+Variable               | Darstellung   | Werte
+---------------------- | ------------- | ------------------------------
+Kilometer              | Wertanzeige   | km
+Liter                  | Wertanzeige   | l (2 Nachkommastellen)
+Preis                  | Wertanzeige   | € (3 Nachkommastellen)
+Durchschnittsverbrauch | Wertanzeige   | l/100km (2 Nachkommastellen)
+Kosten                 | Wertanzeige   | €/100km (2 Nachkommastellen)
+TÜV-Fälligkeitstermin  | Datum/Uhrzeit | Datum
+Wartungsdatum          | Datum/Uhrzeit | Datum
+Wartungsintervall      | Werteingabe   | km
+
+### 7. Visualisierung
+
+Das Modul bringt eine eigene Kachel für die TileVisu mit (HTML-SDK). Dazu einfach die Instanz in der Visualisierung verlinken.
+
+Die Kachel bietet:
+
+* Fahrzeugbild als Hintergrund, Kennzeichen und optional Marke/Modell
+* TÜV- und Service-Status als farbige Badges (Normal/Warnung/Kritisch) mit Resttagen bzw. Restkilometern; am Fälligkeitstag erscheint „heute fällig“, danach „überfällig“
+* Korrektur der Fälligkeiten über das Stift-Symbol (✎)
+* Kennzahlen des letzten Eintrags (Kilometerstand, Verbrauch, Kosten) sowie den Verbrauchsverlauf als Diagramm und Tabelle
+* Eingabemaske für neue Tankvorgänge: Datum, Art der Betankung, Kilometerstand, Menge, Literpreis und Rechnungsbetrag. Von Menge, Literpreis und Rechnung werden zwei eingegeben, der dritte Wert wird automatisch berechnet.
+
+Alternativ können auch nur die Statusvariablen direkt verlinkt werden – dann bitte den Hinweis unter [Statusvariablen](#user-content-5-statusvariablen) beachten.
+
+### 8. Befehlsreferenz
+
+Das Modul stellt keine eigenen öffentlichen Funktionen bereit. Die Bedienung erfolgt über die Kachel bzw. über `RequestAction` auf die Statusvariablen:
+
+```php
+// TÜV-Termin setzen (Unix-Zeitstempel)
+RequestAction(IPS_GetObjectIDByIdent('tuev_due_date', $instanceId), strtotime('2027-05-31'));
+// Service fällig bei Kilometerstand
+RequestAction(IPS_GetObjectIDByIdent('service_due_mileage', $instanceId), 120000);
+```
+
+### 9. Versionshistorie
+
+v3.0.20261007
+
+* _NEU_: Import & Export der Tankdaten als CSV-Datei zur Datensicherung (nur bei aktiver Archivierung)
+* _NEU_: Archivierung wird über einen Button im Aktionsbereich aktiviert, ohne Archivierung bleibt die Instanz inaktiv
+* _NEU_: Kachel vollständig übersetzt (Deutsch/Englisch)
+* _NEU_: Kilometerstand ist beim Speichern eines Tankvorgangs Pflicht
+* _NEU_: Hinweis im Log, wenn das gewählte Fahrzeugbild nicht (mehr) vorhanden ist
+* _FIX_: Fälligkeitsdatum wurde in der Kachel um einen Tag verschoben angezeigt bzw. gespeichert
+* _FIX_: Verbrauchsverlauf konnte bei unveränderten Werten Lücken aufweisen, Laden des Verlaufs deutlich beschleunigt
+* _FIX_: Teilbetankungen zeigten im Verlauf den Verbrauch der vorherigen Volltankung (Nullwerte wurden beim nächsten Speichern gelöscht)
+* _FIX_: Service-Restkilometer berücksichtigen nachträglich erfasste Tankvorgänge
+* _FIX_: TÜV/Service am Fälligkeitstag als „heute fällig“ statt „überfällig“
+* _FIX_: Aggregation der Liter im Archiv auf „Standard“ korrigiert (einmalig über den Button anpassen)
+* _FIX_: Darstellungen der Statusvariablen korrigiert (Wertanzeige statt Werteingabe)
+* _FIX_: Sicherheit und Stabilität verbessert (Systemstart, ungültige Eingaben, fehlendes Archiv)
+
+v2.0.20260730
+
+* _NEU_: Eigene Kachel für die TileVisu (HTML-SDK) mit Eingabemaske und Verbrauchsverlauf
+* _NEU_: Unterstützung von Teilbetankungen (Volltankmethode)
+* _NEU_: Fahrzeugdaten (Marke/Modell, Kennzeichen, Erstzulassung, Fahrzeugbild)
+* _NEU_: TÜV- und Service-Überwachung nach Datum und/oder Kilometerstand
+* _NEU_: Darstellungen statt Profile
+
+v1.1.20260714
+
+* _FIX_: Umstellung auf `IPSModuleStrict`
+* _FIX_: Bibliotheken und Formular überarbeitet
 
 v1.0.20220424
 
@@ -131,7 +241,7 @@ v1.0.20220424
 
 ## Entwickler
 
-Seit nunmehr über 10 Jahren fasziniert mich das Thema Haussteuerung. In den letzten Jahren betätige ich mich auch intensiv in der IP-Symcon Community und steuere dort verschiedenste Skript und Module bei. Ihr findet mich dort unter dem Namen @pitti ;-)
+Seit nunmehr über 10 Jahren fasziniert mich das Thema Haussteuerung. In den letzten Jahren betätige ich mich auch intensiv in der Symcon Community und steuere dort verschiedenste Skripte und Module bei. Ihr findet mich dort unter dem Namen @pitti ;-)
 
 [![GitHub](https://img.shields.io/badge/GitHub-@wilkware-181717.svg?style=for-the-badge&logo=github)](https://wilkware.github.io/)
 
