@@ -129,11 +129,6 @@ trait VariableHelper
         // Allow only allowed characters
         $ident = preg_replace('/[^a-z0-9_]+/i', '', $ident);
 
-        // If the identifier starts with a number, prepend an underscore
-        //if (preg_match('/^[0-9]/', $ident)) {
-        //    $ident = '_' . $ident;
-        //}
-
         // If the identifier is already in use, append a number to make it unique
         if ($exist) {
             $counter = 1;
